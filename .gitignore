@@ -1,0 +1,26 @@
+# Build output
+/target
+/installer/payload
+/installer/*.wixobj
+/installer/*.wixpdb
+*.pdb
+
+# Local deliverables
+/Nexulon Switcher.exe
+/Nexulon Switcher Setup.msi
+/screenshots
+/shots
+
+# Editor and OS noise
+/.vscode
+/.idea
+/.vs
+Thumbs.db
+.DS_Store
+*.log
+*.tmp
+*.bak
+
+# Python cache
+__pycache__/
+*.pyc

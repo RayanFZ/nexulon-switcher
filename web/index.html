@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" data-theme="nebula" data-accent="default" data-density="comfortable" data-motion="full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Nexulon Switcher</title>
+  <style>/*__NEXULON_CSS__*/</style>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <span class="blob blob-a"></span>
+    <span class="blob blob-b"></span>
+    <span class="blob blob-c"></span>
+    <span class="grain"></span>
+  </div>
+
+  <div id="app">
+    <header class="topbar">
+      <div class="brand" title="Nexulon Switcher">
+        <img class="brand-logo" id="brand-logo" alt="Nexulon" width="34" height="34">
+      </div>
+
+      <div class="searchbox" id="searchbox">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input id="search" type="text" placeholder="Search accounts, IDs and notes…" autocomplete="off" spellcheck="false" aria-label="Search accounts">
+        <kbd>Ctrl K</kbd>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-btn" id="refresh-btn" title="Refresh accounts" aria-label="Refresh">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        </button>
+        <button class="icon-btn" id="activity-btn" title="Activity log" aria-label="Activity log">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        </button>
+        <button class="icon-btn gear" id="settings-btn" title="Settings" aria-label="Settings">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3.4"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="rail-wrap" id="rail-wrap">
+      <nav class="rail" id="rail" aria-label="Services and launchers"></nav>
+    </div>
+
+    <main class="content" id="content">
+      <section class="platform-head" id="platform-head"></section>
+      <section class="roster" id="roster" aria-live="polite"></section>
+    </main>
+
+    <footer class="statusbar">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Starting…</span>
+      <span class="spacer"></span>
+      <span class="status-meta" id="status-meta"></span>
+      <button class="link-btn" id="log-btn">Activity</button>
+    </footer>
+  </div>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <section class="palette" id="palette" hidden aria-label="Command palette">
+    <div class="palette-input">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+      <input id="palette-input" type="text" placeholder="Jump to an account, platform or action…" autocomplete="off" spellcheck="false">
+      <kbd>Esc</kbd>
+    </div>
+    <div class="palette-results" id="palette-results"></div>
+    <div class="palette-foot">
+      <span><kbd>↑</kbd><kbd>↓</kbd> move</span>
+      <span><kbd>↵</kbd> open</span>
+      <span class="spacer"></span>
+      <span id="palette-count"></span>
+    </div>
+  </section>
+
+  <aside class="drawer" id="settings" hidden aria-label="Settings"></aside>
+  <aside class="drawer" id="activity" hidden aria-label="Activity log"></aside>
+  <aside class="drawer profile-drawer" id="profile" hidden aria-label="Riot profile"></aside>
+
+  <div class="modal" id="modal" hidden></div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script>/*__NEXULON_JS__*/</script>
+</body>
+</html>
