@@ -29,9 +29,10 @@ faster app with its own look.
 - **Steam** personas, **Chrome** Google names and pictures, **Firefox** account
   names and **Claude** emails are read from local files, so cards fill in
   themselves without any network call.
-- No corporate branding, no build date, no version string in the chrome.
-- Deleting an account is recoverable: sessions move to a trash folder and can be
-  restored from the Undo toast.
+- The app bar is logo-only, with the Nexulon Corp identity carried by the About
+  panel; no build date or version string in the chrome.
+- Deleting an account is immediate: the saved session moves to a recoverable
+  `.trash` folder, so a mistake can still be restored from disk.
 
 ## Requirements
 
@@ -215,7 +216,7 @@ refresh rotates the Riot sign-in once instead of once per field.
 
 ### Look and feel
 
-Five themes (Nebula, Aurora, Ember, Frost, Mono), six accents, comfortable or
+Five themes (Circuit, Aurora, Ember, Frost, Mono), six accents, comfortable or
 compact cards, and a reduce-motion switch. Every account card takes a hue from
 its own name, so the roster reads at a glance. Three roster layouts — **Grid**,
 **Tiles** and **Details** — are switched from the platform header and
@@ -240,9 +241,9 @@ second dark strip above the app and no repeated wordmark.
 | Local metadata | Steam, Chrome, Firefox, Claude Code and Claude Desktop names and pictures read from local files |
 | Browser profiles | Chrome and Firefox switch by launching a chosen profile, with no profile copies |
 | Copy ID / Open folder | One click to the account id or its folder on disk |
-| Recoverable delete | Delete moves the session to `.trash` with a typed-name confirmation; the toast offers **Undo**, and restore puts the account id back |
-| Activity drawer | The switch log, in the window, without opening a file |
+| Instant delete | Delete removes the account at once; the session folder is kept in `.trash` for recovery from disk |
 | Themes and density | Five themes, six accents, compact mode, reduce motion |
+| Cyber Circuit look | Deep-navy surfaces, neon-cyan circuit grid, and a redesigned neon-N brand mark |
 | Toasts | Non-blocking results with an action button where one makes sense |
 | Collapsible rail | Launcher chips become icons instead of overlapping |
 | Installed-only rail | Optional switch hides services that are not installed, while keeping the open one visible |

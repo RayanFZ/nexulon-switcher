@@ -3,40 +3,40 @@
    Organised in layers: tokens, shell, rails, roster, overlays, motion.
    ========================================================================== */
 
-/* -- design tokens -------------------------------------------------------- */
+/* -- design tokens (Cyber Circuit) --------------------------------------- */
 :root {
   --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
   --display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
   --mono: "Cascadia Code", "Consolas", ui-monospace, monospace;
 
-  --bg: #060a14;
-  --bg2: #0a1120;
-  --text: #eef3ff;
-  --muted: #a3b3d1;
-  --faint: #6f82a1;
+  --bg: #020b18;
+  --bg2: #04101f;
+  --text: #e0f7ff;
+  --muted: #8fb3c9;
+  --faint: #5b7a91;
 
-  --line: rgba(148, 178, 255, .16);
-  --line-strong: rgba(148, 178, 255, .3);
-  --panel: rgba(255, 255, 255, .072);
-  --panel-2: rgba(255, 255, 255, .03);
-  --glass: rgba(9, 14, 27, .72);
-  --glass-2: rgba(15, 23, 43, .96);
-  --input: rgba(255, 255, 255, .05);
+  --line: rgba(0, 240, 255, .12);
+  --line-strong: rgba(0, 240, 255, .26);
+  --panel: rgba(0, 240, 255, .05);
+  --panel-2: rgba(0, 240, 255, .025);
+  --glass: rgba(2, 11, 24, .78);
+  --glass-2: rgba(4, 18, 34, .97);
+  --input: rgba(0, 240, 255, .04);
   --shadow: 0 30px 80px -40px #000;
 
-  --accent: #4d8dff;
-  --accent2: #38e8ff;
-  --accent3: #a06bff;
+  --accent: #00f0ff;
+  --accent2: #00a8ff;
+  --accent3: #7b61ff;
   --ok: #39e6a4;
   --warn: #ffc857;
   --danger: #ff5d7a;
 
-  --glow-a: rgba(77, 141, 255, .5);
-  --glow-b: rgba(56, 232, 255, .28);
-  --glow-c: rgba(160, 107, 255, .36);
+  --glow-a: rgba(0, 240, 255, .35);
+  --glow-b: rgba(0, 168, 255, .2);
+  --glow-c: rgba(123, 97, 255, .25);
 
   --card-min: 252px;
-  --radius: 16px;
+  --radius: 14px;
 }
 
 :root[data-theme="aurora"] {
@@ -149,9 +149,11 @@ body::before {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(148, 178, 255, .028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 178, 255, .028) 1px, transparent 1px);
-  background-size: 46px 46px;
+    linear-gradient(rgba(0, 240, 255, .03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, .03) 1px, transparent 1px),
+    repeating-linear-gradient(45deg, rgba(0, 240, 255, .018) 0 1px, transparent 1px 18px),
+    repeating-linear-gradient(-45deg, rgba(0, 168, 255, .012) 0 1px, transparent 1px 26px);
+  background-size: 44px 44px, 44px 44px, 100% 100%, 100% 100%;
   -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 18%, transparent 76%);
   mask-image: radial-gradient(ellipse at 50% 0%, #000 18%, transparent 76%);
 }
@@ -219,37 +221,40 @@ body::before {
   grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
 
-/* -- top bar -------------------------------------------------------------- */
+/* -- top bar (Cyber Circuit) --------------------------------------------- */
 .topbar {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) minmax(220px, 540px) minmax(120px, 1fr);
+  grid-template-columns: minmax(130px, 1fr) minmax(200px, 460px) minmax(100px, 1fr);
   align-items: center;
-  gap: 16px;
-  height: 64px;
-  padding: 0 20px;
+  gap: 12px;
+  height: 50px;
+  padding: 0 16px;
   background:
-    linear-gradient(180deg,
-      var(--bg) 0%,
-      color-mix(in srgb, var(--bg) 82%, transparent) 34%,
-      color-mix(in srgb, var(--glass) 68%, transparent) 72%,
-      color-mix(in srgb, var(--glass) 42%, transparent) 100%);
-  border-bottom: 1px solid var(--line);
-  -webkit-backdrop-filter: blur(20px) saturate(1.35);
-  backdrop-filter: blur(20px) saturate(1.35);
+    linear-gradient(180deg, rgba(0, 240, 255, 0.02), transparent),
+    var(--bg);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.08);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  backdrop-filter: blur(20px) saturate(1.1);
+}
+.topbar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 240, 255, 0.015) 0px, rgba(0, 240, 255, 0.015) 1px, transparent 1px, transparent 4px);
+  pointer-events: none;
 }
 
-.brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .brand-logo {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   flex: 0 0 auto;
   display: block;
-  border-radius: 10px;
+  border-radius: 8px;
   object-fit: cover;
-  background: #05070d;
-  box-shadow:
-    0 8px 22px -12px var(--accent),
-    inset 0 0 0 1px rgba(255, 255, 255, .1);
+  background: transparent;
+  box-shadow: 0 0 18px rgba(0, 240, 255, .18);
 }
 .brand-logo[src=""] { visibility: hidden; }
 
@@ -339,6 +344,7 @@ kbd {
   overflow-y: hidden;
   scrollbar-width: none;
   scroll-behavior: smooth;
+  scroll-padding-inline: 20px;
 }
 .rail::-webkit-scrollbar { display: none; }
 .rail-wrap::before,
@@ -1565,7 +1571,7 @@ kbd {
   border: 1px solid rgba(255, 255, 255, .16);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2);
 }
-.theme-preview.nebula { background: linear-gradient(145deg, #0a1226, #4d8dff 55%, #38e8ff); }
+.theme-preview.circuit { background: linear-gradient(145deg, #020b18, #00f0ff 55%, #00a8ff); }
 .theme-preview.aurora { background: linear-gradient(145deg, #04120f, #24d9a0 55%, #7dffd0); }
 .theme-preview.ember { background: linear-gradient(145deg, #1d0a0b, #ff6b4a 55%, #ffb547); }
 .theme-preview.frost { background: linear-gradient(145deg, #e9eff9, #2563eb 55%, #06b6d4); }
@@ -1683,31 +1689,72 @@ kbd {
   user-select: text;
 }
 
-.about-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 8px 0 4px; }
-.about-hero .logo { width: 58px; height: 58px; border-radius: 18px; }
-.about-hero .logo svg { width: 30px; height: 30px; }
-.about-hero h3 { margin: 6px 0 0; font-family: var(--display); font-size: 17px; font-weight: 700; }
-.about-hero p { margin: 0; font-size: 11.5px; color: var(--muted); max-width: 34ch; }
-.about-version { margin-top: 2px; font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
-
-/* -- activity ------------------------------------------------------------- */
-.log-list { display: flex; flex-direction: column; gap: 6px; }
-.log-line {
-  display: flex;
-  gap: 9px;
-  padding: 8px 10px;
-  border-radius: 9px;
-  border: 1px solid var(--line);
-  background: var(--panel-2);
-  font-family: var(--mono);
-  font-size: 10.5px;
-  line-height: 1.45;
-  color: var(--muted);
-  word-break: break-word;
-  user-select: text;
+/* -- About (Cyber Circuit) --------------------------------------------- */
+.about-hero {
+  padding: 48px 28px;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(0, 240, 255, 0.03), transparent),
+    var(--bg);
 }
-.log-line .log-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent2); margin-top: 5px; flex: 0 0 auto; box-shadow: 0 0 6px var(--accent2); }
-.log-empty { padding: 30px 12px; text-align: center; color: var(--faint); font-size: 12px; }
+.about-hero .logo-orb {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 12px;
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(0, 240, 255, 0.25), transparent 60%),
+    linear-gradient(135deg, rgba(0, 240, 255, 0.08), rgba(0, 168, 255, 0.04)),
+    var(--bg);
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+.about-hero .logo-orb::before {
+  content: "N";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 900;
+  color: rgba(0, 240, 255, 0.95);
+  text-shadow: 0 0 16px rgba(0, 240, 255, 0.85);
+  letter-spacing: -1px;
+}
+.about-hero h3 {
+  margin: 0 0 6px;
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+  text-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
+}
+.about-hero p {
+  margin: 0 0 8px;
+  max-width: 36ch;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+.about-hero .about-version {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  color: rgba(0, 240, 255, 0.85);
+  margin-top: 6px;
+}
+.about-version { margin-top: 2px; font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
 
 /* -- modal ---------------------------------------------------------------- */
 .modal { position: fixed; inset: 0; z-index: 65; display: grid; place-items: center; padding: 24px; }

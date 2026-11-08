@@ -7,7 +7,7 @@
    ========================================================================== */
 
 const THEMES = [
-  { id: 'nebula', name: 'Nebula' },
+  { id: 'circuit', name: 'Circuit' },
   { id: 'aurora', name: 'Aurora' },
   { id: 'ember', name: 'Ember' },
   { id: 'frost', name: 'Frost' },
@@ -66,7 +66,7 @@ function railPlatforms() {
 }
 
 const DEFAULT_UI = {
-  theme: 'nebula',
+  theme: 'circuit',
   accent: 'default',
   density: 'comfortable',
   view: 'grid',
@@ -270,7 +270,7 @@ function syncWindowTheme() {
 
 function applyAppearance() {
   const root = document.documentElement;
-  const theme = THEMES.some((entry) => entry.id === state.ui.theme) ? state.ui.theme : 'nebula';
+  const theme = THEMES.some((entry) => entry.id === state.ui.theme) ? state.ui.theme : 'circuit';
   const accent = ACCENTS.some((entry) => entry.id === state.ui.accent) ? state.ui.accent : 'default';
   const density = state.ui.density === 'compact' ? 'compact' : 'comfortable';
   root.dataset.theme = theme;
@@ -392,7 +392,7 @@ function renderRail() {
     `).join('');
   }
   updateRailFades();
-  const active = $('#rail .pill.active');
+  const active = $('#rail .pill.active') || $('#rail .rail-folder.active');
   if (active) requestAnimationFrame(() => active.scrollIntoView({ block: 'nearest', inline: 'center' }));
 }
 
@@ -722,7 +722,7 @@ function openAccountMenu(name, anchor) {
     <button class="pop-item" data-act="copy">${svgIcon('copy')} Copy ${isProfile ? 'profile folder' : 'account ID'}</button>
     <button class="pop-item" data-act="reveal">${svgIcon('folder')} Show folder</button>
     ${isProfile ? '' : `<div class="pop-sep"></div>
-    <button class="pop-item danger" data-act="delete">${svgIcon('trash')} Move to trash</button>`}
+    <button class="pop-item danger" data-act="delete">${svgIcon('trash')} Delete</button>`}
   `;
   document.body.appendChild(menu);
   const rect = anchor.getBoundingClientRect();
@@ -745,7 +745,7 @@ function openAccountMenu(name, anchor) {
     else if (action === 'rename') openRenameModal(name);
     else if (action === 'copy') copyText(account.id || '');
     else if (action === 'reveal') revealAccount(name);
-    else if (action === 'delete') openDeleteModal(name);
+    else if (action === 'delete') deleteAccount(name);
     else if (action === 'avatar') chooseArtwork(name, 'avatar');
     else if (action === 'cover') chooseArtwork(name, 'cover');
     else if (action === 'avatar-clear') clearArtwork(name, 'avatar');
@@ -793,6 +793,8 @@ function openFolderMenu(groupId, anchor) {
   menu.addEventListener('click', (event) => {
     const item = event.target.closest('[data-platform]');
     if (!item) return;
+    event.preventDefault();
+    event.stopPropagation();
     closePopover();
     selectPlatform(item.dataset.platform);
   });
@@ -1133,46 +1135,14 @@ function openNotesModal(name) {
   });
 }
 
-function openDeleteModal(name) {
+async function deleteAccount(name) {
   const platform = state.platform;
-  openModal({
-    icon: 'trash',
-    title: `Move ${name} to trash?`,
-    subtitle: 'The saved session can be restored from the Undo action.',
-    body: `
-      <p class="hint warn">This removes ${esc(name)} from the account list. The live launcher login is not touched.</p>
-      <div class="field">
-        <label for="modal-input">Type “${esc(name)}” to confirm</label>
-        <input class="input" id="modal-input" autocomplete="off" spellcheck="false" placeholder="${esc(name)}">
-      </div>
-    `,
-    confirm: 'Move to trash',
-    confirmClass: 'danger',
-    onConfirm: async (root) => {
-      if ($('#modal-input', root).value.trim() !== name) {
-        toast('info', 'Confirmation did not match', 'Type the account name exactly.');
-        return false;
-      }
-      const result = await call('delete', { platform, account: name });
-      if (state.platform === platform) await refreshAccounts();
-      toast('success', 'Account moved to trash', name, 9000, {
-        label: 'Undo',
-        run: async () => {
-          await call('restore', { platform, account: name, trash: result.trash });
-          if (state.platform === platform) await refreshAccounts();
-          toast('success', 'Account restored', name);
-        }
-      });
-      return true;
-    }
-  });
-  const ok = $('[data-modal="ok"]');
-  const input = $('#modal-input');
-  if (ok && input) {
-    ok.disabled = true;
-    input.addEventListener('input', () => {
-      ok.disabled = input.value.trim() !== name;
-    });
+  try {
+    await call('delete', { platform, account: name });
+    if (state.platform === platform) await refreshAccounts();
+    toast('success', 'Account deleted', name);
+  } catch (error) {
+    toast('error', 'Could not delete account', error.message);
   }
 }
 
@@ -1227,10 +1197,6 @@ function renderSettings() {
           <div class="setting-row">
             <div class="sr-text"><strong>Data folder</strong><span class="mono">${esc(state.dataRoot)}</span></div>
             <button class="btn small" data-action="open-data">${svgIcon('folder')} Open</button>
-          </div>
-          <div class="setting-row">
-            <div class="sr-text"><strong>Activity log</strong><span>Switch history and diagnostics</span></div>
-            <button class="btn small" data-action="open-log">${svgIcon('log')} Open</button>
           </div>
           <div class="setting-row">
             <div class="sr-text"><strong>Quit Nexulon Switcher</strong><span>Close the app completely</span></div>
@@ -1322,17 +1288,16 @@ function renderSettings() {
   } else {
     content = `
       <div class="about-hero">
-        <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19V5l14 14V5"/></svg></span>
-        <h3>Nexulon Switcher</h3>
-        <p>Fast, native account switching for game launchers. Built to keep every session on this PC.</p>
-        <span class="about-version">Version ${esc(state.version || '1.0.0')}</span>
+        <div class="logo-orb"></div>
+        <h3>NEXULON CORP</h3>
+        <p>Session orchestration for persistent gaming.</p>
+        <span class="about-version">Build 1.0.0</span>
       </div>
       <div>
         <h3 class="section-title">Storage</h3>
         <div class="path-box">${esc(state.dataRoot)}</div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn small" data-action="open-data">${svgIcon('folder')} Open data folder</button>
-          <button class="btn small ghost" data-action="open-log">${svgIcon('log')} Open log</button>
         </div>
       </div>
       <div class="hint">The old TcNo Account Switcher folder was imported once on first launch. It is no longer read or written.</div>
@@ -1342,7 +1307,7 @@ function renderSettings() {
   drawer.innerHTML = `
     <div class="drawer-head">
       <div class="d-icon">${svgIcon('settings')}</div>
-      <div><h2>Settings</h2><p>Nexulon Switcher</p></div>
+      <div><h2>Settings</h2><p>Nexulon Corp</p></div>
       <button class="icon-btn" data-close aria-label="Close settings">${svgIcon('close')}</button>
     </div>
     <div class="drawer-body">
@@ -1392,53 +1357,11 @@ async function detectOne(platformName) {
   }
 }
 
-/* -- activity ------------------------------------------------------------- */
-function openActivity() {
-  $('#activity').hidden = false;
-  $('#activity').innerHTML = `
-    <div class="drawer-head">
-      <div class="d-icon">${svgIcon('log')}</div>
-      <div><h2>Activity</h2><p>Recent switch history</p></div>
-      <button class="icon-btn" data-close aria-label="Close activity">${svgIcon('close')}</button>
-    </div>
-    <div class="drawer-body"><div class="log-empty">Loading…</div></div>
-  `;
-  syncScrim();
-  loadActivity();
-}
-
-async function loadActivity() {
-  try {
-    const lines = await call('log');
-    const list = (Array.isArray(lines) ? lines : []).slice().reverse();
-    const markup = list.length
-      ? `<div class="log-list">${list.map((line) => `<div class="log-line"><span class="log-dot"></span><span>${esc(line)}</span></div>`).join('')}</div>`
-      : '<div class="log-empty">No activity recorded yet. Switch an account to see it here.</div>';
-    $('#activity').innerHTML = `
-      <div class="drawer-head">
-        <div class="d-icon">${svgIcon('log')}</div>
-        <div><h2>Activity</h2><p>Recent switch history</p></div>
-        <button class="icon-btn" data-close aria-label="Close activity">${svgIcon('close')}</button>
-      </div>
-      <div class="drawer-body">
-        <div style="display:flex;gap:8px">
-          <button class="btn small" data-action="refresh-log">${svgIcon('refresh')} Refresh</button>
-          <button class="btn small ghost" data-action="open-log">${svgIcon('folder')} Open file</button>
-        </div>
-        ${markup}
-      </div>
-    `;
-  } catch (error) {
-    toast('error', 'Could not read activity', error.message);
-  }
-}
-
 /* -- command palette ------------------------------------------------------ */
 function paletteItems() {
   const items = [];
   const actions = [
     ['Open settings', 'General preferences', 'settings', () => openSettings('general')],
-    ['Open activity log', 'Recent switch history', 'log', openActivity],
     ['Refresh accounts', state.platform || 'Current platform', 'refresh', () => refreshAccounts()],
     [`Add account to ${state.platform}`, 'Capture the current session', 'plus', openAddModal],
     ['Open data folder', state.dataRoot, 'folder', () => call('open_data').catch((error) => toast('error', 'Could not open folder', error.message))],
@@ -1541,7 +1464,7 @@ function runPaletteItem(index) {
 
 /* -- overlay plumbing ----------------------------------------------------- */
 function syncScrim() {
-  const open = !$('#palette').hidden || !$('#settings').hidden || !$('#activity').hidden || !$('#profile').hidden || !$('#modal').hidden;
+  const open = !$('#palette').hidden || !$('#settings').hidden || !$('#profile').hidden || !$('#modal').hidden;
   $('#scrim').hidden = !open;
 }
 
@@ -1550,7 +1473,6 @@ function closeTop() {
   if (!$('#modal').hidden) return closeModal();
   if (!$('#palette').hidden) return closePalette();
   if (!$('#profile').hidden) return closeDrawer('#profile');
-  if (!$('#activity').hidden) return closeDrawer('#activity');
   if (!$('#settings').hidden) return closeDrawer('#settings');
 }
 
@@ -1659,12 +1581,26 @@ function wire() {
     const folder = event.target.closest('[data-folder]');
     if (folder) {
       event.stopPropagation();
+      if (popover && popover.dataset.folder === folder.dataset.folder) {
+        closePopover();
+        return;
+      }
+      folder.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
       openFolderMenu(folder.dataset.folder, folder);
       return;
     }
     const pill = event.target.closest('[data-platform]');
     if (pill) selectPlatform(pill.dataset.platform);
   });
+
+  // Let the mouse wheel move the service rail sideways, so folders that sit
+  // past the right edge are always reachable without a trackpad gesture.
+  $('#rail').addEventListener('wheel', (event) => {
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    closePopover();
+    $('#rail').scrollLeft += event.deltaY;
+  }, { passive: false });
   $('#rail').addEventListener('scroll', updateRailFades, { passive: true });
   window.addEventListener('resize', updateRailFades);
 
@@ -1759,8 +1695,6 @@ function wire() {
       setStatus('Refresh failed', 'error');
     }
   });
-  $('#activity-btn').addEventListener('click', openActivity);
-  $('#log-btn').addEventListener('click', openActivity);
   $('#settings-btn').addEventListener('click', () => openSettings('general'));
 
   $('#scrim').addEventListener('click', closeTop);
@@ -1769,6 +1703,7 @@ function wire() {
     if (popover && !popover.contains(event.target)) closePopover();
   });
   $('#content').addEventListener('scroll', closePopover, { passive: true });
+  window.addEventListener('resize', closePopover);
 
   $('#settings').addEventListener('click', async (event) => {
     if (event.target.closest('[data-close]')) return closeDrawer('#settings');
@@ -1844,16 +1779,6 @@ function wire() {
     if (event.target.id === 'sort-select') {
       saveUI({ sort: event.target.value });
       renderRoster();
-    }
-  });
-
-  $('#activity').addEventListener('click', (event) => {
-    if (event.target.closest('[data-close]')) return closeDrawer('#activity');
-    const action = event.target.closest('[data-action]');
-    if (!action) return;
-    if (action.dataset.action === 'refresh-log') loadActivity();
-    if (action.dataset.action === 'open-log') {
-      call('open_log').catch((error) => toast('error', 'Could not open log', error.message));
     }
   });
 
@@ -1943,6 +1868,9 @@ async function boot() {
     const data = await call('bootstrap');
     state.prefs = data.prefs || {};
     state.ui = { ...DEFAULT_UI, ...(state.prefs.ui || {}) };
+    // Older builds stored the theme as "nebula"; the Circuit palette replaced
+    // it, so migrate the saved value instead of showing no active theme card.
+    if (!THEMES.some((entry) => entry.id === state.ui.theme)) state.ui.theme = 'circuit';
     state.autostart = Boolean(data.autostart);
     state.version = data.version || '';
     state.dataRoot = data.dataRoot || '';
