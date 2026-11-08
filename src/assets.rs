@@ -46,12 +46,13 @@ pub fn platform_svg(name: &str) -> Option<String> {
 }
 
 /// The app icon as a data URI: the emblem on its navy tile, so the header
-/// reads as a logo rather than a thin outline on a dark strip.
+/// reads as a logo rather than a thin outline on a dark strip. The vector
+/// version weighs ~2 KB and stays sharp at any DPI.
 pub fn logo_data_uri() -> String {
     use base64::Engine;
-    let bytes = include_bytes!("../assets/nexulon.png");
+    let bytes = include_bytes!("../assets/icon-small.svg");
     format!(
-        "data:image/png;base64,{}",
+        "data:image/svg+xml;base64,{}",
         base64::engine::general_purpose::STANDARD.encode(bytes)
     )
 }
