@@ -247,14 +247,12 @@ body::before {
 
 .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .brand-logo {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   flex: 0 0 auto;
   display: block;
-  border-radius: 8px;
-  object-fit: cover;
-  background: transparent;
-  box-shadow: 0 0 18px rgba(0, 240, 255, .18);
+  border-radius: 9px;
+  object-fit: contain;
 }
 .brand-logo[src=""] { visibility: hidden; }
 
@@ -1698,33 +1696,12 @@ kbd {
     linear-gradient(180deg, rgba(0, 240, 255, 0.03), transparent),
     var(--bg);
 }
-.about-hero .logo-orb {
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  margin: 0 auto 12px;
-  border-radius: 15px;
-  background:
-    radial-gradient(circle at 30% 25%, rgba(0, 240, 255, 0.25), transparent 60%),
-    linear-gradient(135deg, rgba(0, 240, 255, 0.08), rgba(0, 168, 255, 0.04)),
-    var(--bg);
-  border: 1px solid rgba(0, 240, 255, 0.18);
-  box-shadow: 0 0 24px rgba(0, 240, 255, 0.15);
-  position: relative;
-  overflow: hidden;
-}
-.about-hero .logo-orb::before {
-  content: "N";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 26px;
-  font-weight: 900;
-  color: rgba(0, 240, 255, 0.95);
-  text-shadow: 0 0 16px rgba(0, 240, 255, 0.85);
-  letter-spacing: -1px;
+.about-hero .about-logo {
+  width: 64px;
+  height: 64px;
+  display: block;
+  margin: 0 auto 14px;
+  object-fit: contain;
 }
 .about-hero h3 {
   margin: 0 0 6px;

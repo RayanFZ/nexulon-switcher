@@ -220,6 +220,8 @@ const state = {
   version: '',
   dataRoot: '',
   logPath: '',
+  logo: '',
+  mark: '',
   platforms: [],
   platform: '',
   platformData: null,
@@ -1288,7 +1290,7 @@ function renderSettings() {
   } else {
     content = `
       <div class="about-hero">
-        <div class="logo-orb"></div>
+        <img class="about-logo" src="${state.mark || state.logo}" alt="" width="64" height="64">
         <h3>NEXULON CORP</h3>
         <p>Session orchestration for persistent gaming.</p>
         <span class="about-version">Build 1.0.0</span>
@@ -1876,8 +1878,10 @@ async function boot() {
     state.dataRoot = data.dataRoot || '';
     state.logPath = data.logPath || '';
     state.platforms = data.platforms || [];
+    state.logo = data.logo || '';
+    state.mark = data.mark || '';
     const logo = $('#brand-logo');
-    if (logo && data.logo) logo.src = data.logo;
+    if (logo && state.logo) logo.src = state.logo;
     applyAppearance();
     renderRail();
     const first = state.platforms.find((platform) => platform.name === state.ui.lastPlatform) || state.platforms[0];

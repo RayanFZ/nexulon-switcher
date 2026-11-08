@@ -1,115 +1,122 @@
-"""Generate the Nexulon Corp cyber-circuit icon (.ico + raw RGBA).
+"""Build the Nexulon app icon from ``assets/icon-source.svg``.
 
-The mark is a neon "N" on a deep-navy tile with faint circuit traces, so it
-reads at 16 px and matches the Circuit theme used by the interface.
+The vector is rasterised with the Edge/Chromium build that ships with Windows,
+so the repo needs no SVG rasteriser. The resulting PNG, multi-size ICO and raw
+RGBA feed the window icon, the executable icon and the in-app header.
+
+    python tools/make_icon.py
 """
 
 from __future__ import annotations
 
+import io
+import struct
+import subprocess
+import tempfile
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image
 
-OUT = Path(__file__).resolve().parent.parent / "assets"
-SIZE = 256
-SUPERSAMPLE = 4
+ROOT = Path(__file__).resolve().parent.parent
+ASSETS = ROOT / "assets"
+SOURCE = ASSETS / "icon-source.svg"
+SOURCE_SMALL = ASSETS / "icon-small.svg"
+SIZE = 512
+SCALE = 2
+
+EDGE_CANDIDATES = [
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+]
 
 
-def render(size: int) -> Image.Image:
-    s = size
-    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
+def find_edge() -> str:
+    for candidate in EDGE_CANDIDATES:
+        if Path(candidate).exists():
+            return candidate
+    raise SystemExit("Microsoft Edge not found; it is needed to rasterise the SVG.")
 
-    # Rounded navy tile.
-    pad = s * 0.035
-    radius = int(s * 0.20)
-    draw.rounded_rectangle(
-        [pad, pad, s - pad, s - pad],
-        radius=radius,
-        fill=(2, 11, 24, 255),
-    )
-    draw.rounded_rectangle(
-        [pad, pad, s - pad, s - pad],
-        radius=radius,
-        outline=(0, 240, 255, 46),
-        width=max(1, int(s * 0.006)),
-    )
 
-    # Faint circuit traces and nodes around the mark.
-    trace = (0, 240, 255, 42)
-    tw = max(1, int(s * 0.007))
-    traces = [
-        ((0.09, 0.30), (0.19, 0.30), (0.19, 0.22), (0.25, 0.22)),
-        ((0.09, 0.70), (0.20, 0.70), (0.20, 0.80), (0.25, 0.80)),
-        ((0.91, 0.26), (0.81, 0.26), (0.81, 0.20), (0.75, 0.20)),
-        ((0.91, 0.74), (0.82, 0.74), (0.82, 0.80), (0.75, 0.80)),
-        ((0.09, 0.50), (0.16, 0.50)),
-        ((0.91, 0.50), (0.84, 0.50)),
-    ]
-    for points in traces:
-        draw.line([(x * s, y * s) for x, y in points], fill=trace, width=tw)
-    for x, y in [(0.09, 0.30), (0.09, 0.70), (0.91, 0.26), (0.91, 0.74), (0.09, 0.50), (0.91, 0.50)]:
-        r = max(2, int(s * 0.011))
-        draw.ellipse([x * s - r, y * s - r, x * s + r, y * s + r], fill=(0, 240, 255, 110))
-
-    # Neon N: left stem, diagonal, right stem.
-    left = [(0.26, 0.20), (0.38, 0.20), (0.38, 0.80), (0.26, 0.80)]
-    diag = [(0.38, 0.20), (0.50, 0.20), (0.74, 0.80), (0.62, 0.80)]
-    right = [(0.62, 0.20), (0.74, 0.20), (0.74, 0.80), (0.62, 0.80)]
-    shapes = (left, diag, right)
-
-    # Outer glow.
-    glow = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    gd = ImageDraw.Draw(glow)
-    for shape in shapes:
-        gd.polygon([(x * s, y * s) for x, y in shape], fill=(0, 240, 255, 190))
-    glow = glow.filter(ImageFilter.GaussianBlur(radius=s * 0.028))
-    img = Image.alpha_composite(img, glow)
-    draw = ImageDraw.Draw(img)
-
-    # Cyan-to-blue vertical gradient clipped to the N.
-    mask = Image.new("L", (s, s), 0)
-    md = ImageDraw.Draw(mask)
-    for shape in shapes:
-        md.polygon([(x * s, y * s) for x, y in shape], fill=255)
-    gradient = Image.new("RGBA", (s, s))
-    gdraw = ImageDraw.Draw(gradient)
-    for y in range(s):
-        t = y / max(1, s - 1)
-        r = round(125 + (0 - 125) * t)
-        g = round(252 + (168 - 252) * t)
-        b = round(255 + (255 - 255) * t)
-        gdraw.line([(0, y), (s, y)], fill=(r, g, b, 255))
-    img.paste(gradient, (0, 0), mask)
-
-    # Crisp neon edge.
-    for shape in shapes:
-        draw.polygon(
-            [(x * s, y * s) for x, y in shape],
-            outline=(180, 255, 255, 230),
-            width=max(1, int(s * 0.004)),
+def render(source: Path) -> Image.Image:
+    edge = find_edge()
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "icon.png"
+        profile = Path(tmp) / "profile"
+        result = subprocess.run(
+            [
+                edge,
+                "--headless=new",
+                "--disable-gpu",
+                "--hide-scrollbars",
+                f"--user-data-dir={profile}",
+                f"--force-device-scale-factor={SCALE}",
+                f"--window-size={SIZE},{SIZE}",
+                "--default-background-color=00000000",
+                f"--screenshot={out}",
+                source.as_uri(),
+            ],
+            capture_output=True,
         )
-    return img
+        if not out.exists():
+            raise SystemExit(
+                "Edge did not produce a screenshot:\n"
+                + result.stderr.decode("utf-8", "replace")
+            )
+        return Image.open(out).convert("RGBA")
+
+
+def write_ico(path: Path, frames: list[Image.Image]) -> None:
+    """Write a multi-size ICO with one PNG frame per size.
+
+    Pillow's own ICO writer regenerates every size from a single image, which
+    would throw away the heavier compact frames used at 16-32 px.
+    """
+    blobs = []
+    for frame in frames:
+        buffer = io.BytesIO()
+        frame.save(buffer, format="PNG", optimize=True)
+        blobs.append(buffer.getvalue())
+
+    header = struct.pack("<HHH", 0, 1, len(frames))
+    offset = 6 + 16 * len(frames)
+    entries = b""
+    for frame, blob in zip(frames, blobs):
+        side = frame.width
+        entries += struct.pack(
+            "<BBBBHHII",
+            0 if side >= 256 else side,
+            0 if side >= 256 else side,
+            0,
+            0,
+            1,
+            32,
+            len(blob),
+            offset,
+        )
+        offset += len(blob)
+    path.write_bytes(header + entries + b"".join(blobs))
 
 
 def main() -> None:
-    OUT.mkdir(parents=True, exist_ok=True)
-    master = render(SIZE * SUPERSAMPLE).resize((SIZE, SIZE), Image.LANCZOS)
+    master = render(SOURCE).resize((SIZE * SCALE, SIZE * SCALE), Image.LANCZOS)
+    # 16-32 px get a heavier stroke and no glow so the mark stays legible.
+    compact = render(SOURCE_SMALL).resize((SIZE * SCALE, SIZE * SCALE), Image.LANCZOS)
 
-    # Raw RGBA for the runtime window icon.
-    (OUT / "icon.rgba").write_bytes(master.tobytes())
-
-    # Multi-size .ico for the executable.
-    sizes = [16, 24, 32, 48, 64, 128, 256]
-    frames = [master.resize((s, s), Image.LANCZOS) for s in sizes]
-    frames[-1].save(
-        OUT / "nexulon.ico",
-        format="ICO",
-        sizes=[(s, s) for s in sizes],
-        append_images=frames[:-1],
+    master.resize((SIZE, SIZE), Image.LANCZOS).save(ASSETS / "nexulon.png")
+    (ASSETS / "icon.rgba").write_bytes(
+        master.resize((256, 256), Image.LANCZOS).tobytes()
     )
-    master.save(OUT / "nexulon.png")
-    print(f"wrote {OUT / 'nexulon.ico'} ({(OUT / 'nexulon.ico').stat().st_size} bytes)")
+
+    sizes = [16, 24, 32, 48, 64, 128, 256]
+    frames = [
+        (compact if size <= 32 else master).resize((size, size), Image.LANCZOS)
+        for size in sizes
+    ]
+    write_ico(ASSETS / "nexulon.ico", frames)
+
+    for name in ("nexulon.png", "nexulon.ico", "icon.rgba"):
+        path = ASSETS / name
+        print(f"wrote {path} ({path.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":

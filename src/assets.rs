@@ -45,12 +45,24 @@ pub fn platform_svg(name: &str) -> Option<String> {
     lookup(name)
 }
 
-/// The Nexulon mark as a data URI, so the header needs no extra file on disk.
+/// The app icon as a data URI: the emblem on its navy tile, so the header
+/// reads as a logo rather than a thin outline on a dark strip.
 pub fn logo_data_uri() -> String {
     use base64::Engine;
     let bytes = include_bytes!("../assets/nexulon.png");
     format!(
         "data:image/png;base64,{}",
+        base64::engine::general_purpose::STANDARD.encode(bytes)
+    )
+}
+
+/// The bare emblem as a data URI. SVG keeps it crisp at every DPI, including
+/// the 200%+ scales where a fixed-size PNG starts to soften.
+pub fn mark_data_uri() -> String {
+    use base64::Engine;
+    let bytes = include_bytes!("../web/logo.svg");
+    format!(
+        "data:image/svg+xml;base64,{}",
         base64::engine::general_purpose::STANDARD.encode(bytes)
     )
 }

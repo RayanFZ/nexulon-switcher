@@ -563,6 +563,7 @@ pub fn dispatch(method: &str, params: &Value) -> Result<Value, String> {
             "autostart": autostart_enabled(),
             "version": env!("CARGO_PKG_VERSION"),
             "logo": crate::assets::logo_data_uri(),
+            "mark": crate::assets::mark_data_uri(),
             "dataRoot": config::data_root().display().to_string(),
             "logPath": config::log_path().display().to_string(),
         })),
