@@ -11,6 +11,9 @@
 /screenshots
 /shots
 
+# Accidental nested repo created by GitHub Desktop's --cli-open
+/nexulon-switcher/
+
 # Editor and OS noise
 /.vscode
 /.idea

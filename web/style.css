@@ -246,15 +246,6 @@ body::before {
 }
 
 .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.brand-logo {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  display: block;
-  border-radius: 9px;
-  object-fit: contain;
-}
-.brand-logo[src=""] { visibility: hidden; }
 
 .searchbox {
   display: flex;

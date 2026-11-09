@@ -1880,8 +1880,6 @@ async function boot() {
     state.platforms = data.platforms || [];
     state.logo = data.logo || '';
     state.mark = data.mark || '';
-    const logo = $('#brand-logo');
-    if (logo && state.logo) logo.src = state.logo;
     applyAppearance();
     renderRail();
     const first = state.platforms.find((platform) => platform.name === state.ui.lastPlatform) || state.platforms[0];
