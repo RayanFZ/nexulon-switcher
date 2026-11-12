@@ -141,6 +141,9 @@ fn apply_title_theme(window: &tao::window::Window, background: &str, text: &str,
 #[cfg(not(windows))]
 fn apply_title_theme(_: &tao::window::Window, _: &str, _: &str, _: &str) {}
 
+/// `--dump` answers one bridge method on stdout and exits. It is a development
+/// aid, so release builds ignore it entirely and have no command-line surface.
+#[cfg(debug_assertions)]
 fn dump(args: &[String]) -> Option<i32> {
     let position = args.iter().position(|argument| argument == "--dump")?;
     let method = args
@@ -169,6 +172,46 @@ fn dump(args: &[String]) -> Option<i32> {
     }
 }
 
+/// Release builds never answer `--dump`.
+#[cfg(not(debug_assertions))]
+fn dump(_: &[String]) -> Option<i32> {
+    None
+}
+
+/// The page is compiled into the executable and never navigates. The first
+/// navigation is the document WebView2 builds from that HTML; every later one
+/// must be byte-identical to it, so a stray link, a dropped file or injected
+/// markup cannot pull a remote page into the privileged webview.
+struct NavigationGuard(Mutex<Option<String>>);
+
+impl NavigationGuard {
+    fn new() -> Self {
+        Self(Mutex::new(None))
+    }
+
+    fn allow(&self, url: String) -> bool {
+        let mut first = self
+            .0
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        match first.as_deref() {
+            None => {
+                *first = Some(url);
+                true
+            }
+            Some(allowed) => {
+                if allowed == url {
+                    true
+                } else {
+                    let shown: String = url.chars().take(120).collect();
+                    engine::log(&format!("blocked a webview navigation to {shown}"));
+                    false
+                }
+            }
+        }
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     if let Some(code) = dump(&args) {
@@ -191,10 +234,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let proxy = event_loop.create_proxy();
 
     let mut web_context = wry::WebContext::new(Some(config::webview_data_dir()));
+    let navigation = NavigationGuard::new();
     let webview = WebViewBuilder::new_with_web_context(&mut web_context)
         .with_html(page())
         .with_background_color((6, 9, 18, 255))
         .with_devtools(cfg!(debug_assertions))
+        .with_navigation_handler(move |url| navigation.allow(url))
         .with_ipc_handler(move |request| {
             let body = request.body().to_string();
             // Theme updates only need the window handle, so answer them on the
@@ -242,8 +287,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     apply_title_theme(&window, "#060a14", "#eef3ff", "#1a2338");
 
     // `NEXULON_EVAL` runs one JavaScript snippet once the page is up. It exists
-    // so the interface can be driven by automated screenshot checks; normal
-    // launches never set it.
+    // so the interface can be driven by automated screenshot checks; it is
+    // compiled out of release builds so the shipped exe cannot be scripted.
+    #[cfg(debug_assertions)]
     if let Ok(script) = std::env::var("NEXULON_EVAL") {
         if !script.trim().is_empty() {
             let proxy = event_loop.create_proxy();

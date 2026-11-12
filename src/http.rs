@@ -144,7 +144,8 @@ pub fn request(
 
 /// A request to a loopback service with a self-signed certificate, such as the
 /// Riot Client's local API. Proxies and certificate checks are bypassed only
-/// here, so ordinary internet requests keep full validation.
+/// here, and only for a loopback host, so ordinary internet requests keep full
+/// validation.
 pub fn request_local(
     method: &str,
     url: &str,
@@ -152,6 +153,19 @@ pub fn request_local(
     body: Option<&[u8]>,
 ) -> Result<Response, String> {
     send(method, url, headers, body, true)
+}
+
+/// True for `localhost`, `127.0.0.0/8` and `::1` — the only hosts allowed to
+/// skip certificate validation.
+fn is_loopback(host: &str) -> bool {
+    let host = host.trim_start_matches('[').trim_end_matches(']');
+    if host.eq_ignore_ascii_case("localhost") {
+        return true;
+    }
+    host.parse::<std::net::Ipv4Addr>()
+        .map(|address| address.is_loopback())
+        .or_else(|_| host.parse::<std::net::Ipv6Addr>().map(|address| address.is_loopback()))
+        .unwrap_or(false)
 }
 
 fn send(
@@ -162,6 +176,12 @@ fn send(
     local: bool,
 ) -> Result<Response, String> {
     let parsed = parse_url(url)?;
+    if local && !is_loopback(&parsed.host) {
+        return Err(format!(
+            "Refusing to relax certificate checks for {}, which is not a loopback host.",
+            parsed.host
+        ));
+    }
     let agent = wide("NexulonSwitcher/1.0");
     let session = unsafe {
         WinHttpOpen(
@@ -307,4 +327,30 @@ fn send(
         status: status as u16,
         body: body_bytes,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_loopback;
+
+    #[test]
+    fn loopback_hosts_are_accepted() {
+        for host in ["127.0.0.1", "127.4.5.6", "localhost", "LOCALHOST", "::1", "[::1]"] {
+            assert!(is_loopback(host), "{host} should count as loopback");
+        }
+    }
+
+    #[test]
+    fn public_hosts_are_rejected() {
+        for host in [
+            "riotgames.com",
+            "localhost.example.com",
+            "10.0.0.1",
+            "192.168.1.10",
+            "0.0.0.0",
+            "",
+        ] {
+            assert!(!is_loopback(host), "{host} must not count as loopback");
+        }
+    }
 }
