@@ -657,6 +657,7 @@ async function switchAccount(name, cardElement) {
     const started = result && result.started;
     toast('success', `Signed in as ${name}`, started ? 'The launcher is starting.' : 'The launcher was left closed.');
     setStatus(`Signed in as ${name}`);
+    if (started) scheduleAutoPull(state.platform, name, 8000);
     await refreshAccounts({ keepStatus: true });
   } catch (error) {
     toast('error', 'Switch failed', error.message);
@@ -947,6 +948,72 @@ function applyProfile(name, result) {
   renderRoster();
 }
 
+/* -- automatic Riot details after a sign-in -------------------------------- */
+const autoPullTimers = new Map();
+
+/// Riot needs a few seconds after the client starts before its local API
+/// answers, so the pull is deliberately delayed rather than fired immediately.
+function scheduleAutoPull(platform, name, delay = 5000) {
+  if (!/riot/i.test(platform)) return;
+  if (state.prefs.autoProfile === false) return;
+  const key = `${platform}/${name}`;
+  const existing = autoPullTimers.get(key);
+  if (existing) clearTimeout(existing);
+  autoPullTimers.set(key, setTimeout(() => {
+    autoPullTimers.delete(key);
+    runAutoPull(platform, name);
+  }, delay));
+}
+
+async function runAutoPull(platform, name, attempt = 0) {
+  if (state.prefs.autoProfile === false) return;
+  let status;
+  try {
+    status = await call('valorant_status');
+  } catch {
+    return;
+  }
+  if (!status || !status.signedIn) return;
+  // Only read through the running client's local API. With the client closed
+  // the fetch would rotate the refresh token, and the copy already saved in the
+  // account folder would stop working.
+  if (!status.running) {
+    if (attempt >= 2) return;
+    const key = `${platform}/${name}`;
+    autoPullTimers.set(key, setTimeout(() => {
+      autoPullTimers.delete(key);
+      runAutoPull(platform, name, attempt + 1);
+    }, 5000));
+    return;
+  }
+
+  let result;
+  try {
+    // The session was just captured or restored, so the live Riot account is
+    // this one: forcing avoids the "different account" check.
+    result = await call('riot_profile', { platform, account: name, force: true });
+  } catch {
+    return; // the client may still be starting; the manual refresh remains
+  }
+  if (!result || result.mismatch) return;
+  if (state.platform !== platform) return;
+
+  applyProfile(name, result);
+  const account = state.accounts.find((entry) => entry.name === name);
+  if (account && (!account.cover || !account.avatar)) {
+    try {
+      const card = await call('valorant_card', { platform, account: name });
+      if (account && !account.cover && card.cover) account.cover = card.cover;
+      if (account && !account.avatar && card.avatar) account.avatar = card.avatar;
+      renderRoster();
+    } catch {
+      // The rank and level above are still useful without the card art.
+    }
+  }
+  const line = profileLine(result.summary);
+  toast('success', 'Riot details updated', line ? `${name} · ${line}` : name);
+}
+
 function profileLine(summary) {
   if (!summary) return '';
   const parts = [];
@@ -1061,45 +1128,75 @@ async function revealAccount(name) {
   }
 }
 
-function openAddModal() {
+async function openAddModal() {
   const isRiot = /riot/i.test(state.platform);
+  let signedIn = false;
+  let liveName = '';
+  if (isRiot) {
+    try {
+      const status = await call('valorant_status');
+      signedIn = Boolean(status && status.signedIn);
+      liveName = (status && status.liveName) || '';
+    } catch {
+      signedIn = false;
+    }
+  }
+
+  const hint = !isRiot
+    ? `Sign in to ${esc(state.platform)} with the account you want to save, then give it a name here.`
+    : signedIn
+      ? `${esc(liveName || 'A Riot account')} is signed in. Press Add account to save it now, or start a fresh sign-in to capture a different one.`
+      : 'Restarting the Riot Client…';
+
   openModal({
     icon: 'plus',
     title: 'Add account',
     subtitle: isRiot
-      ? 'The Riot Client restarts logged out, so you can sign in to the account you want to save.'
+      ? signedIn
+        ? 'Save the session that is already signed in, or start a fresh sign-in.'
+        : 'The Riot Client restarts logged out so you can sign in.'
       : `Capture the session currently signed in to ${state.platform}.`,
     body: `
       <div class="field">
         <label for="modal-input">Account name</label>
         <input class="input" id="modal-input" placeholder="e.g. Main, Smurf, Work" maxlength="48" autocomplete="off">
-        <div class="hint" id="add-status">${isRiot
-          ? 'Restarting the Riot Client…'
-          : `Sign in to ${esc(state.platform)} with the account you want to save, then give it a name here.`}</div>
+        <div class="hint" id="add-status">${hint}</div>
       </div>
     `,
+    footer: isRiot && signedIn
+      ? '<button class="btn ghost lead" data-add="fresh">Sign in to a different account</button>'
+      : '',
     confirm: 'Add account',
     onMount: (root) => {
       if (!isRiot) return;
       const status = $('#add-status', root);
       const ok = $('[data-modal="ok"]', root);
-      ok.disabled = true;
-      call('prepare_login', { platform: state.platform })
-        .then(() => {
+      const fresh = $('[data-add="fresh"]', root);
+      const restart = async () => {
+        ok.disabled = true;
+        if (fresh) fresh.disabled = true;
+        if (status) {
+          status.classList.remove('warn');
+          status.textContent = 'Restarting the Riot Client…';
+        }
+        try {
+          await call('prepare_login', { platform: state.platform });
           if (status) {
             status.textContent = 'The Riot Client has restarted. Sign in with the account you want to save, then press Add account.';
           }
-        })
-        .catch((error) => {
+        } catch (error) {
           if (status) {
             status.classList.add('warn');
             status.textContent = error.message;
           }
           toast('error', 'Could not restart the Riot Client', error.message);
-        })
-        .finally(() => {
+        } finally {
           ok.disabled = false;
-        });
+          if (fresh) fresh.disabled = false;
+        }
+      };
+      if (fresh) fresh.addEventListener('click', restart);
+      if (!signedIn) restart();
     },
     onConfirm: async (root) => {
       const input = $('#modal-input', root);
@@ -1110,6 +1207,7 @@ function openAddModal() {
       }
       await call('add', { platform: state.platform, name });
       await refreshAccounts();
+      scheduleAutoPull(state.platform, name, 5000);
       toast('success', 'Account added', `${name} is ready to switch to.`);
       return true;
     }
@@ -1217,6 +1315,7 @@ function renderSettings() {
         <div class="section-card">
           ${toggleRow('Clear old login first', 'Remove stale session files before copying the new one', state.prefs.clearOldLogin !== false, 'pref-clear')}
           ${toggleRow('Start the launcher after switching', 'Launch the game client automatically', state.prefs.startLauncher !== false, 'pref-start')}
+          ${toggleRow('Fetch Riot details after sign-in', 'Pull rank, level and the player card about 5 seconds after an account signs in', state.prefs.autoProfile !== false, 'pref-auto')}
           ${toggleRow('Launch at Windows sign-in', 'Start Nexulon Switcher with Windows', state.autostart, 'pref-autostart')}
         </div>
       </div>
@@ -1521,6 +1620,7 @@ function openModal(options) {
       </div>
       <div class="modal-body">${options.body || ''}</div>
       <div class="modal-foot">
+        ${options.footer || ''}
         <button class="btn ghost" data-modal="cancel">Cancel</button>
         <button class="btn ${options.confirmClass || 'primary'}" data-modal="ok">${esc(options.confirm || 'Continue')}</button>
       </div>
@@ -1771,6 +1871,10 @@ function wire() {
     } else if (name === 'pref-start') {
       state.prefs.startLauncher = !(state.prefs.startLauncher !== false);
       call('prefs', { startLauncher: state.prefs.startLauncher }).catch(() => {});
+      renderSettings();
+    } else if (name === 'pref-auto') {
+      state.prefs.autoProfile = !(state.prefs.autoProfile !== false);
+      call('prefs', { autoProfile: state.prefs.autoProfile }).catch(() => {});
       renderSettings();
     } else if (name === 'pref-autostart') {
       try {

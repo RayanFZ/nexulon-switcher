@@ -68,7 +68,7 @@ fn load_prefs() -> Map<String, Value> {
 
 fn set_prefs(params: &Value) -> Result<Value, String> {
     let mut prefs = load_prefs();
-    for key in ["clearOldLogin", "startLauncher"] {
+    for key in ["clearOldLogin", "startLauncher", "autoProfile"] {
         if let Some(value) = params.get(key).and_then(Value::as_bool) {
             prefs.insert(key.into(), json!(value));
         }
