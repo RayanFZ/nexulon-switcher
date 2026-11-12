@@ -1145,7 +1145,7 @@ async function openAddModal() {
   const hint = !isRiot
     ? `Sign in to ${esc(state.platform)} with the account you want to save, then give it a name here.`
     : signedIn
-      ? `${esc(liveName || 'A Riot account')} is signed in. Press “Save current account” to store it, or use the button on the left to sign in to a different one.`
+      ? `${esc(liveName || 'A Riot account')} is signed in. Press “Save current account” to store it, or sign in to a different one below.`
       : 'Restarting the Riot Client…';
 
   openModal({
@@ -1162,10 +1162,10 @@ async function openAddModal() {
         <input class="input" id="modal-input" placeholder="e.g. Main, Smurf, Work" maxlength="48" autocomplete="off">
         <div class="hint" id="add-status">${hint}</div>
       </div>
+      ${isRiot && signedIn
+        ? '<button class="link-btn" type="button" data-add="fresh">Sign in to a different account</button>'
+        : ''}
     `,
-    footer: isRiot && signedIn
-      ? '<button class="btn ghost lead" data-add="fresh">Sign in to a different account</button>'
-      : '',
     confirm: isRiot && signedIn ? 'Save current account' : 'Add account',
     onMount: (root) => {
       if (!isRiot) return;
@@ -1620,7 +1620,6 @@ function openModal(options) {
       </div>
       <div class="modal-body">${options.body || ''}</div>
       <div class="modal-foot">
-        ${options.footer || ''}
         <button class="btn ghost" data-modal="cancel">Cancel</button>
         <button class="btn ${options.confirmClass || 'primary'}" data-modal="ok">${esc(options.confirm || 'Continue')}</button>
       </div>
