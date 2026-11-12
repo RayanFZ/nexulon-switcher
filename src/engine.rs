@@ -1140,6 +1140,13 @@ pub fn prepare_login(platform: &Platform) -> Res<Map<String, Value>> {
             platform.name
         ));
     }
+    let exe = platform.exe_path();
+    if exe.is_empty() || !Path::new(&exe).is_file() {
+        return Err(format!(
+            "The launcher for {} was not found, so the current sign-in was left alone. Set its location first.",
+            platform.name
+        ));
+    }
     let method = platform
         .settings()
         .get("ClosingMethod")
@@ -1175,7 +1182,7 @@ fn sign_in_problem(platform: &Platform) -> Option<String> {
     match crate::riot::signed_in() {
         Ok((name, _)) if !name.trim().is_empty() => None,
         _ => Some(
-            "The Riot Client is not signed in yet, so there is no account to save. Press \"Sign in to a different account\", finish signing in, then press Add account."
+            "The Riot Client is not signed in yet, so there is no account to save. Sign in to the Riot Client, then press Add account."
                 .to_string(),
         ),
     }
@@ -1203,7 +1210,7 @@ pub fn add_current(platform: &Platform, name: &str) -> Res<String> {
         if let Some(existing) = read_ids(platform).get(&uid).and_then(Value::as_str) {
             if existing != name {
                 return Err(format!(
-                    "This session is already saved as {existing:?}. Press \"Sign in to a different account\" to capture a different one."
+                    "This session is already saved as {existing:?}. Close this dialog and open Add account again to start a fresh sign-in."
                 ));
             }
         }

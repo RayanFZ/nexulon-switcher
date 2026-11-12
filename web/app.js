@@ -1066,43 +1066,40 @@ function openAddModal() {
   openModal({
     icon: 'plus',
     title: 'Add account',
-    subtitle: `Capture the session currently signed in to ${state.platform}.`,
+    subtitle: isRiot
+      ? 'The Riot Client restarts logged out, so you can sign in to the account you want to save.'
+      : `Capture the session currently signed in to ${state.platform}.`,
     body: `
       <div class="field">
         <label for="modal-input">Account name</label>
         <input class="input" id="modal-input" placeholder="e.g. Main, Smurf, Work" maxlength="48" autocomplete="off">
-        <div class="hint">Give the account that is signed in right now a name, then press Add account.</div>
+        <div class="hint" id="add-status">${isRiot
+          ? 'Restarting the Riot Client…'
+          : `Sign in to ${esc(state.platform)} with the account you want to save, then give it a name here.`}</div>
       </div>
-      ${isRiot ? `<p class="hint" id="add-status">Adding an account saves whoever is signed in to the Riot Client. To save a different one, use “Sign in to a different account” first — Nexulon closes the client, clears the current sign-in and opens it again.</p>` : ''}
     `,
-    footer: isRiot ? '<button class="btn ghost lead" data-add="fresh">Sign in to a different account</button>' : '',
     confirm: 'Add account',
     onMount: (root) => {
-      const fresh = $('[data-add="fresh"]', root);
-      if (!fresh) return;
-      fresh.addEventListener('click', async () => {
-        const status = $('#add-status', root);
-        fresh.disabled = true;
-        if (status) {
-          status.hidden = false;
-          status.textContent = 'Closing the Riot Client and clearing the current sign-in…';
-        }
-        try {
-          await call('prepare_login', { platform: state.platform });
+      if (!isRiot) return;
+      const status = $('#add-status', root);
+      const ok = $('[data-modal="ok"]', root);
+      ok.disabled = true;
+      call('prepare_login', { platform: state.platform })
+        .then(() => {
           if (status) {
-            status.textContent = 'The Riot Client has been restarted with a clean sign-in. Sign in to the account you want to save, then press Add account.';
+            status.textContent = 'The Riot Client has restarted. Sign in with the account you want to save, then press Add account.';
           }
-          toast('success', 'Riot Client restarted', 'Sign in to the account you want to save, then press Add account.');
-        } catch (error) {
+        })
+        .catch((error) => {
           if (status) {
-            status.hidden = false;
+            status.classList.add('warn');
             status.textContent = error.message;
           }
-          toast('error', 'Could not reset the sign-in', error.message);
-        } finally {
-          fresh.disabled = false;
-        }
-      });
+          toast('error', 'Could not restart the Riot Client', error.message);
+        })
+        .finally(() => {
+          ok.disabled = false;
+        });
     },
     onConfirm: async (root) => {
       const input = $('#modal-input', root);
@@ -1524,7 +1521,6 @@ function openModal(options) {
       </div>
       <div class="modal-body">${options.body || ''}</div>
       <div class="modal-foot">
-        ${options.footer || ''}
         <button class="btn ghost" data-modal="cancel">Cancel</button>
         <button class="btn ${options.confirmClass || 'primary'}" data-modal="ok">${esc(options.confirm || 'Continue')}</button>
       </div>
