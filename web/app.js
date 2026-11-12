@@ -96,6 +96,7 @@ const ICONS = {
   note: '<path d="M5 4h14v16l-4-3H5V4Z"/>',
   close: '<path d="m6 6 12 12M18 6 6 18"/>',
   power: '<path d="M12 3v9"/><path d="M6.4 6.4a8 8 0 1 0 11.2 0"/>',
+  login: '<path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M13 4h6a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-6"/>',
   arrow: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
   chevron: '<path d="m9 6 6 6-6 6"/>',
   pin: '<path d="M9 4h6l-1 7 3 3v2H7v-2l3-3-1-7Z"/><path d="M12 16v4"/>',
@@ -407,6 +408,15 @@ function updateRailFades() {
 }
 
 /* -- head + roster -------------------------------------------------------- */
+/// A launcher can be restarted logged out only when it is not profile-based and
+/// its folder is known. Browsers and profile folders have no such step.
+function canFreshSignIn() {
+  const data = state.platformData || {};
+  if ((data.mode || 'copy') === 'profile') return false;
+  const settings = data.settings || {};
+  return Boolean(settings.folder || settings.exe);
+}
+
 function renderHead(data) {
   const platform = state.platforms.find((entry) => entry.name === state.platform) || {
     name: state.platform, accounts: 0, installed: false, icon: null
@@ -442,7 +452,10 @@ function renderHead(data) {
       <button class="btn ghost" data-action="detect" title="Find the launcher folder automatically">${svgIcon('search')}<span>Detect folder</span></button>
       ${isProfile
         ? `<button class="btn primary" data-action="reload" title="Read the profile list again">${svgIcon('refresh')}<span>Reload profiles</span></button>`
-        : `<button class="btn primary" data-action="add">${svgIcon('plus')}<span>Add account</span></button>`}
+        : `${canFreshSignIn()
+            ? `<button class="btn ghost" data-action="signin" title="Restart ${esc(state.platform)} logged out so you can sign in with a different account">${svgIcon('login')}<span>Sign in</span></button>`
+            : ''}
+           <button class="btn primary" data-action="add" title="Save the account that is already signed in">${svgIcon('plus')}<span>Add account</span></button>`}
     </div>
   `;
 }
@@ -537,7 +550,8 @@ function renderRoster() {
              <button class="btn ghost" data-action="palette">${svgIcon('search')} Search all platforms</button>`
           : isProfile
             ? `<button class="btn primary" data-action="reload">${svgIcon('refresh')} Reload profiles</button>`
-            : `<button class="btn primary" data-action="add">${svgIcon('plus')} Add account</button>`}
+            : `<button class="btn primary" data-action="add">${svgIcon('plus')} Add account</button>
+               ${canFreshSignIn() ? `<button class="btn ghost" data-action="signin">${svgIcon('login')} Sign in to another account</button>` : ''}`}
       </div>
     `;
   } else {
@@ -1128,11 +1142,12 @@ async function revealAccount(name) {
   }
 }
 
-async function openAddModal() {
+async function openAddModal(options = {}) {
+  const freshSignIn = options.freshSignIn === true;
   const isRiot = /riot/i.test(state.platform);
   let signedIn = false;
   let liveName = '';
-  if (isRiot) {
+  if (isRiot && !freshSignIn) {
     try {
       const status = await call('valorant_status');
       signedIn = Boolean(status && status.signedIn);
@@ -1142,61 +1157,58 @@ async function openAddModal() {
     }
   }
 
-  const hint = !isRiot
-    ? `Sign in to ${esc(state.platform)} with the account you want to save, then give it a name here.`
-    : signedIn
-      ? `${esc(liveName || 'A Riot account')} is signed in. Press “Save current account” to store it, or sign in to a different one below.`
-      : 'Restarting the Riot Client…';
+  const hint = freshSignIn
+    ? `Restarting ${esc(state.platform)} logged out…`
+    : !isRiot
+      ? `Sign in to ${esc(state.platform)} with the account you want to save, then give it a name here.`
+      : signedIn
+        ? `${esc(liveName || 'A Riot account')} is signed in. Press “Save current account” to store it.`
+        : 'Restarting the Riot Client…';
 
   openModal({
-    icon: 'plus',
-    title: 'Add account',
-    subtitle: isRiot
-      ? signedIn
-        ? 'Save the session that is already signed in, or start a fresh sign-in.'
-        : 'The Riot Client restarts logged out so you can sign in.'
-      : `Capture the session currently signed in to ${state.platform}.`,
+    icon: freshSignIn ? 'login' : 'plus',
+    title: freshSignIn ? 'Sign in to a new account' : 'Add account',
+    subtitle: freshSignIn
+      ? `${state.platform} restarts logged out, then you sign in with the account you want to save.`
+      : isRiot
+        ? signedIn
+          ? 'Save the session that is already signed in.'
+          : 'The Riot Client restarts logged out so you can sign in.'
+        : `Capture the session currently signed in to ${state.platform}.`,
     body: `
       <div class="field">
         <label for="modal-input">Account name</label>
         <input class="input" id="modal-input" placeholder="e.g. Main, Smurf, Work" maxlength="48" autocomplete="off">
         <div class="hint" id="add-status">${hint}</div>
       </div>
-      ${isRiot && signedIn
-        ? '<button class="link-btn" type="button" data-add="fresh">Sign in to a different account</button>'
-        : ''}
     `,
-    confirm: isRiot && signedIn ? 'Save current account' : 'Add account',
+    confirm: signedIn && !freshSignIn ? 'Save current account' : 'Add account',
     onMount: (root) => {
-      if (!isRiot) return;
+      if (!isRiot && !freshSignIn) return;
       const status = $('#add-status', root);
       const ok = $('[data-modal="ok"]', root);
-      const fresh = $('[data-add="fresh"]', root);
       const restart = async () => {
         ok.disabled = true;
-        if (fresh) fresh.disabled = true;
         if (status) {
           status.classList.remove('warn');
-          status.textContent = 'Restarting the Riot Client…';
+          status.textContent = `Restarting ${state.platform}…`;
         }
         try {
           await call('prepare_login', { platform: state.platform });
           if (status) {
-            status.textContent = 'The Riot Client has restarted. Sign in with the account you want to save, then press Add account.';
+            status.textContent = `${state.platform} has restarted. Sign in with the account you want to save, then press Add account.`;
           }
         } catch (error) {
           if (status) {
             status.classList.add('warn');
             status.textContent = error.message;
           }
-          toast('error', 'Could not restart the Riot Client', error.message);
+          toast('error', 'Could not restart the launcher', error.message);
         } finally {
           ok.disabled = false;
-          if (fresh) fresh.disabled = false;
         }
       };
-      if (fresh) fresh.addEventListener('click', restart);
-      if (!signedIn) restart();
+      if (freshSignIn || !signedIn) restart();
     },
     onConfirm: async (root) => {
       const input = $('#modal-input', root);
@@ -1491,7 +1503,10 @@ function paletteItems() {
   const actions = [
     ['Open settings', 'General preferences', 'settings', () => openSettings('general')],
     ['Refresh accounts', state.platform || 'Current platform', 'refresh', () => refreshAccounts()],
-    [`Add account to ${state.platform}`, 'Capture the current session', 'plus', openAddModal],
+    [`Add account to ${state.platform}`, 'Save the session that is signed in', 'plus', openAddModal],
+    ...(canFreshSignIn()
+      ? [[`Sign in to a new account in ${state.platform}`, 'Restart the launcher logged out', 'login', () => openAddModal({ freshSignIn: true })]]
+      : []),
     ['Open data folder', state.dataRoot, 'folder', () => call('open_data').catch((error) => toast('error', 'Could not open folder', error.message))],
     ['Toggle compact cards', state.ui.density === 'compact' ? 'Currently compact' : 'Currently comfortable', 'grid', () => {
       saveUI({ density: state.ui.density === 'compact' ? 'comfortable' : 'compact' });
@@ -1743,6 +1758,7 @@ function wire() {
         return;
       }
       if (name === 'add') return openAddModal();
+      if (name === 'signin') return openAddModal({ freshSignIn: true });
       if (name === 'reload') return refreshAccounts();
       if (name === 'clear-search') {
         $('#search').value = '';
@@ -1791,6 +1807,7 @@ function wire() {
     const action = event.target.closest('[data-action]');
     if (!action) return;
     if (action.dataset.action === 'add') openAddModal();
+    if (action.dataset.action === 'signin') openAddModal({ freshSignIn: true });
     if (action.dataset.action === 'detect') detectFolder();
     if (action.dataset.action === 'reload') refreshAccounts();
   });
