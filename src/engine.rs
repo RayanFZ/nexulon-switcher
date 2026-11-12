@@ -1128,6 +1128,59 @@ pub fn launch(platform: &Platform) -> Option<String> {
 // ---------------------------------------------------------------------------
 // high level operations
 // ---------------------------------------------------------------------------
+/// Close the launcher, wipe the live sign-in and start it again, so the user
+/// can sign in with a *different* account before that session is captured.
+///
+/// Adding an account without this only snapshots whoever is already signed in,
+/// which is why "add" used to save duplicates of the current account.
+pub fn prepare_login(platform: &Platform) -> Res<Map<String, Value>> {
+    if platform.is_profile_mode() {
+        return Err(format!(
+            "{} switches profiles, so there is no login data to clear.",
+            platform.name
+        ));
+    }
+    let method = platform
+        .settings()
+        .get("ClosingMethod")
+        .and_then(Value::as_str)
+        .unwrap_or("Combined")
+        .to_string();
+
+    kill_processes(platform, &method);
+    let cleared = clear_login_files(platform);
+    let launched = launch(platform);
+
+    log(&format!(
+        "prepared a fresh sign-in for {} (cleared={}, launched={})",
+        platform.name,
+        cleared.len(),
+        launched.is_some()
+    ));
+
+    let mut result = Map::new();
+    result.insert("platform".into(), json!(platform.name));
+    result.insert("cleared".into(), json!(cleared.len()));
+    result.insert("launched".into(), json!(launched));
+    Ok(result)
+}
+
+/// Riot keeps its refresh token in the live YAML only while the client is
+/// signed in. Capturing before that point would store an empty session and
+/// produce an account that duplicates whatever was there before.
+fn sign_in_problem(platform: &Platform) -> Option<String> {
+    if !platform.name.to_ascii_lowercase().contains("riot") {
+        return None;
+    }
+    match crate::riot::signed_in() {
+        Ok((name, _)) if !name.trim().is_empty() => None,
+        _ => Some(
+            "The Riot Client is not signed in yet, so there is no account to save. Press \"Sign in to a different account\", finish signing in, then press Add account."
+                .to_string(),
+        ),
+    }
+}
+
 pub fn add_current(platform: &Platform, name: &str) -> Res<String> {
     if platform.is_profile_mode() {
         return Err(format!(
@@ -1141,7 +1194,20 @@ pub fn add_current(platform: &Platform, name: &str) -> Res<String> {
         return Err(format!("An account named {name:?} already exists."));
     }
 
+    if let Some(problem) = sign_in_problem(platform) {
+        return Err(problem);
+    }
+
     let uid = read_unique_id(platform, true);
+    if !uid.is_empty() {
+        if let Some(existing) = read_ids(platform).get(&uid).and_then(Value::as_str) {
+            if existing != name {
+                return Err(format!(
+                    "This session is already saved as {existing:?}. Press \"Sign in to a different account\" to capture a different one."
+                ));
+            }
+        }
+    }
     let missing = copy_out(platform, &target);
 
     if platform.all_files_required() && !missing.is_empty() {

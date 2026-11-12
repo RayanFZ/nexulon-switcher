@@ -1062,6 +1062,7 @@ async function revealAccount(name) {
 }
 
 function openAddModal() {
+  const isRiot = /riot/i.test(state.platform);
   openModal({
     icon: 'plus',
     title: 'Add account',
@@ -1070,10 +1071,39 @@ function openAddModal() {
       <div class="field">
         <label for="modal-input">Account name</label>
         <input class="input" id="modal-input" placeholder="e.g. Main, Smurf, Work" maxlength="48" autocomplete="off">
-        <div class="hint">Sign in to the launcher with the account you want to save, then give it a name here.</div>
+        <div class="hint">Give the account that is signed in right now a name, then press Add account.</div>
       </div>
+      ${isRiot ? `<p class="hint" id="add-status">Adding an account saves whoever is signed in to the Riot Client. To save a different one, use “Sign in to a different account” first — Nexulon closes the client, clears the current sign-in and opens it again.</p>` : ''}
     `,
+    footer: isRiot ? '<button class="btn ghost lead" data-add="fresh">Sign in to a different account</button>' : '',
     confirm: 'Add account',
+    onMount: (root) => {
+      const fresh = $('[data-add="fresh"]', root);
+      if (!fresh) return;
+      fresh.addEventListener('click', async () => {
+        const status = $('#add-status', root);
+        fresh.disabled = true;
+        if (status) {
+          status.hidden = false;
+          status.textContent = 'Closing the Riot Client and clearing the current sign-in…';
+        }
+        try {
+          await call('prepare_login', { platform: state.platform });
+          if (status) {
+            status.textContent = 'The Riot Client has been restarted with a clean sign-in. Sign in to the account you want to save, then press Add account.';
+          }
+          toast('success', 'Riot Client restarted', 'Sign in to the account you want to save, then press Add account.');
+        } catch (error) {
+          if (status) {
+            status.hidden = false;
+            status.textContent = error.message;
+          }
+          toast('error', 'Could not reset the sign-in', error.message);
+        } finally {
+          fresh.disabled = false;
+        }
+      });
+    },
     onConfirm: async (root) => {
       const input = $('#modal-input', root);
       const name = input.value.trim();
@@ -1494,12 +1524,14 @@ function openModal(options) {
       </div>
       <div class="modal-body">${options.body || ''}</div>
       <div class="modal-foot">
+        ${options.footer || ''}
         <button class="btn ghost" data-modal="cancel">Cancel</button>
         <button class="btn ${options.confirmClass || 'primary'}" data-modal="ok">${esc(options.confirm || 'Continue')}</button>
       </div>
     </div>
   `;
   modalConfirm = options.onConfirm || null;
+  if (options.onMount) options.onMount(root);
   const ok = $('[data-modal="ok"]', root);
   ok.addEventListener('click', async () => {
     if (!modalConfirm) return closeModal();

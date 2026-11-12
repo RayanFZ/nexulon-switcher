@@ -271,6 +271,12 @@ fn switch(params: &Value) -> Result<Value, String> {
     Ok(Value::Object(result))
 }
 
+fn prepare_login(params: &Value) -> Result<Value, String> {
+    let platform = platform(params)?;
+    let result = engine::prepare_login(platform)?;
+    Ok(Value::Object(result))
+}
+
 fn add(params: &Value) -> Result<Value, String> {
     let platform = platform(params)?;
     let name = params
@@ -571,6 +577,7 @@ pub fn dispatch(method: &str, params: &Value) -> Result<Value, String> {
         "accounts" => accounts(params),
         "switch" => switch(params),
         "add" => add(params),
+        "prepare_login" => prepare_login(params),
         "delete" => delete(params),
         "restore" => restore(params),
         "rename" => rename(params),
