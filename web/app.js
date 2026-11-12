@@ -1145,7 +1145,7 @@ async function openAddModal() {
   const hint = !isRiot
     ? `Sign in to ${esc(state.platform)} with the account you want to save, then give it a name here.`
     : signedIn
-      ? `${esc(liveName || 'A Riot account')} is signed in. Press Add account to save it now, or start a fresh sign-in to capture a different one.`
+      ? `${esc(liveName || 'A Riot account')} is signed in. Press “Save current account” to store it, or use the button on the left to sign in to a different one.`
       : 'Restarting the Riot Client…';
 
   openModal({
@@ -1166,7 +1166,7 @@ async function openAddModal() {
     footer: isRiot && signedIn
       ? '<button class="btn ghost lead" data-add="fresh">Sign in to a different account</button>'
       : '',
-    confirm: 'Add account',
+    confirm: isRiot && signedIn ? 'Save current account' : 'Add account',
     onMount: (root) => {
       if (!isRiot) return;
       const status = $('#add-status', root);
