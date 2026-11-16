@@ -1820,6 +1820,7 @@ textarea.input { height: auto; min-height: 92px; padding: 10px 12px; resize: ver
 .toast-icon .ico { width: 15px; height: 15px; }
 .toast.success .toast-icon { color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, transparent); }
 .toast.error .toast-icon { color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, transparent); }
+.toast.warn .toast-icon { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
 .toast.info .toast-icon { color: var(--accent2); background: color-mix(in srgb, var(--accent) 16%, transparent); }
 .toast-body { flex: 1; min-width: 0; padding-top: 1px; }
 .toast-body strong { display: block; font-size: 12px; font-weight: 650; }

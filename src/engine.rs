@@ -1085,17 +1085,52 @@ fn taskkill(exe: &str, force: bool) {
     let _ = command.output();
 }
 
+/// Image names from `exes` that still have a live process, matched on the
+/// quoted name so `VALORANT.exe` never matches `VALORANT-Win64-Shipping.exe`.
+fn running_among(exes: &[String]) -> Vec<String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let Ok(output) = Command::new("tasklist")
+        .args(["/NH", "/FO", "CSV"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+    else {
+        return Vec::new();
+    };
+    let text = String::from_utf8_lossy(&output.stdout).to_ascii_lowercase();
+    exes.iter()
+        .filter(|exe| text.contains(&format!("\"{}\"", exe.to_ascii_lowercase())))
+        .cloned()
+        .collect()
+}
+
+/// End every process the platform lists and return the ones that survived.
+///
+/// A running game is its own binary, separate from the launcher, so a switch
+/// only closes the match when the platform lists that binary too.
 pub fn kill_processes(platform: &Platform, method: &str) -> Vec<String> {
     let force_only = method.eq_ignore_ascii_case("taskkill");
-    for exe in platform.exes_to_end() {
+    let exes = platform.exes_to_end();
+    for exe in &exes {
         if force_only {
-            taskkill(&exe, true);
+            taskkill(exe, true);
         } else {
-            taskkill(&exe, false);
-            taskkill(&exe, true);
+            taskkill(exe, false);
+            taskkill(exe, true);
         }
     }
-    platform.exes_to_end()
+    // A game can take a moment to go away, and a protected process can refuse
+    // the first attempt, so retry once before reporting it as a survivor.
+    let mut survivors = running_among(&exes);
+    if !survivors.is_empty() {
+        std::thread::sleep(std::time::Duration::from_millis(400));
+        for exe in &survivors {
+            taskkill(exe, true);
+        }
+        std::thread::sleep(std::time::Duration::from_millis(200));
+        survivors = running_among(&exes);
+    }
+    survivors
 }
 
 pub fn launch(platform: &Platform) -> Option<String> {
@@ -1272,7 +1307,7 @@ pub fn switch(
         .and_then(Value::as_bool)
         .unwrap_or(true);
 
-    kill_processes(platform, &method);
+    let still_running = kill_processes(platform, &method);
     let cleared = if clear {
         clear_login_files(platform)
     } else {
@@ -1289,6 +1324,13 @@ pub fn switch(
         name,
         if uid.is_empty() { "unknown" } else { &uid }
     ));
+    if !still_running.is_empty() {
+        log(&format!(
+            "{} is still running after the switch: {}",
+            platform.name,
+            still_running.join(", ")
+        ));
+    }
 
     let mut result = Map::new();
     result.insert("platform".into(), json!(platform.name));
@@ -1297,6 +1339,7 @@ pub fn switch(
     result.insert("cleared".into(), json!(cleared));
     result.insert("missing".into(), json!(missing));
     result.insert("started".into(), json!(started));
+    result.insert("stillRunning".into(), json!(still_running));
     Ok(result)
 }
 

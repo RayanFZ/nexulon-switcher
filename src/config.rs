@@ -139,7 +139,9 @@ pub const BUNDLED_PLATFORMS: &str = include_str!("../data/Platforms.default.json
 /// Add platforms that shipped after the user's `Platforms.json` was created.
 ///
 /// Existing entries are never touched, so a hand-edited folder or identifier
-/// survives an update; only names that are missing are copied in.
+/// survives an update; only names that are missing are copied in. The one
+/// exception is the process list, which gains bundled executables once per
+/// version because a missing game exe leaves a match running through a switch.
 pub fn ensure_platforms() {
     let bundled: serde_json::Value = match serde_json::from_str(BUNDLED_PLATFORMS) {
         Ok(value) => value,
@@ -181,7 +183,45 @@ pub fn ensure_platforms() {
             added += 1;
         }
     }
-    if added == 0 && existing.is_some() {
+
+    // A running game is a separate binary from its launcher, and older files
+    // only knew the launcher. Without the game exe a switch left the match
+    // running, so every stored list is topped up once with the bundled names.
+    let mut updated = 0;
+    for (name, body) in bundled_platforms {
+        let Some(bundled_exes) = body.get("ExesToEnd").and_then(|value| value.as_array()) else {
+            continue;
+        };
+        let Some(live_body) = live_platforms.get_mut(name).and_then(|value| value.as_object_mut())
+        else {
+            continue;
+        };
+        let version = live_body
+            .get(PROCESS_LIST_VERSION_KEY)
+            .and_then(|value| value.as_u64())
+            .unwrap_or(1);
+        if version >= PROCESS_LIST_VERSION {
+            continue;
+        }
+        let list = live_body
+            .entry("ExesToEnd")
+            .or_insert_with(|| serde_json::json!([]));
+        let Some(list) = list.as_array_mut() else {
+            continue;
+        };
+        for exe in bundled_exes {
+            if !list.iter().any(|value| value == exe) {
+                list.push(exe.clone());
+            }
+        }
+        live_body.insert(
+            PROCESS_LIST_VERSION_KEY.into(),
+            serde_json::json!(PROCESS_LIST_VERSION),
+        );
+        updated += 1;
+    }
+
+    if added == 0 && updated == 0 && existing.is_some() {
         return;
     }
 
@@ -230,6 +270,11 @@ fn enable_platforms(ids: &[String]) {
 
 pub const ID_FILE: &str = "TcNoAccSwitcher-ID.instance";
 pub const REG_FILE: &str = "reg.json";
+
+/// Bumped when the bundled process list gains an executable that existing
+/// installs must also end before a switch, so the top-up runs exactly once.
+const PROCESS_LIST_VERSION_KEY: &str = "ProcessListVersion";
+const PROCESS_LIST_VERSION: u64 = 2;
 
 pub fn is_non_account(entry: &str) -> bool {
     matches!(

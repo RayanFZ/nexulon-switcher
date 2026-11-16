@@ -669,7 +669,12 @@ async function switchAccount(name, cardElement) {
     });
     recordUsage(name);
     const started = result && result.started;
-    toast('success', `Signed in as ${name}`, started ? 'The launcher is starting.' : 'The launcher was left closed.');
+    const stuck = (result && result.stillRunning) || [];
+    if (stuck.length) {
+      toast('warn', `Switched to ${name}, but ${stuck.join(', ')} is still running`, 'It may refuse to close. End it from Task Manager, or run Nexulon as administrator.');
+    } else {
+      toast('success', `Signed in as ${name}`, started ? 'The launcher is starting.' : 'The launcher was left closed.');
+    }
     setStatus(`Signed in as ${name}`);
     if (started) scheduleAutoPull(state.platform, name, 8000);
     await refreshAccounts({ keepStatus: true });
@@ -1685,7 +1690,7 @@ function toast(kind, title, detail, duration = 4200, action = null) {
   const node = document.createElement('div');
   node.className = `toast ${kind}`;
   node.innerHTML = `
-    <div class="toast-icon">${svgIcon(kind === 'success' ? 'check' : kind === 'error' ? 'alert' : 'info')}</div>
+    <div class="toast-icon">${svgIcon(kind === 'success' ? 'check' : kind === 'error' || kind === 'warn' ? 'alert' : 'info')}</div>
     <div class="toast-body"><strong>${esc(title)}</strong>${detail ? `<span>${esc(detail)}</span>` : ''}</div>
     ${action ? `<button class="toast-action">${esc(action.label)}</button>` : ''}
     <button class="toast-x" aria-label="Dismiss">×</button>
