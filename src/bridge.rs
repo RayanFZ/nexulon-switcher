@@ -53,6 +53,9 @@ fn load_prefs() -> Map<String, Value> {
     let mut prefs = Map::new();
     prefs.insert("clearOldLogin".into(), json!(true));
     prefs.insert("startLauncher".into(), json!(true));
+    // Stored values are only copied over keys that already exist here, so every
+    // saved preference needs its default listed or it silently resets at boot.
+    prefs.insert("autoProfile".into(), json!(true));
     prefs.insert("ui".into(), json!({}));
     if let Ok(text) = std::fs::read_to_string(prefs_path()) {
         if let Ok(Value::Object(stored)) = serde_json::from_str::<Value>(&text) {

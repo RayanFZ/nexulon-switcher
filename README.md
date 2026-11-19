@@ -34,6 +34,14 @@ faster app with its own look.
 - Deleting an account is immediate: the saved session moves to a recoverable
   `.trash` folder, so a mistake can still be restored from disk.
 
+## Screenshots
+
+![Grid view of Nexulon Switcher](docs/screenshots/grid-view.png)
+
+| Tiles view | Details view |
+| --- | --- |
+| ![Tiles view](docs/screenshots/tiles-view.png) | ![Details view](docs/screenshots/details-view.png) |
+
 ## Requirements
 
 | | |
