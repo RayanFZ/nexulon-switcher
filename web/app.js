@@ -984,7 +984,9 @@ function scheduleAutoPull(platform, name, delay = 5000) {
   }, delay));
 }
 
-async function runAutoPull(platform, name, attempt = 0) {
+async function runAutoPull(platform, name, attempt = 0, options = {}) {
+  const silent = options.silent === true;
+  const force = options.force !== false;
   if (state.prefs.autoProfile === false) return;
   let status;
   try {
@@ -1001,16 +1003,18 @@ async function runAutoPull(platform, name, attempt = 0) {
     const key = `${platform}/${name}`;
     autoPullTimers.set(key, setTimeout(() => {
       autoPullTimers.delete(key);
-      runAutoPull(platform, name, attempt + 1);
+      runAutoPull(platform, name, attempt + 1, options);
     }, 5000));
     return;
   }
 
   let result;
   try {
-    // The session was just captured or restored, so the live Riot account is
-    // this one: forcing avoids the "different account" check.
-    result = await call('riot_profile', { platform, account: name, force: true });
+    // After a sign-in the session was just captured or restored, so the live
+    // Riot account is this one and forcing skips the "different account"
+    // check. The launch check passes force: false instead, because a switch
+    // may have happened between the lookup and the fetch.
+    result = await call('riot_profile', { platform, account: name, force });
   } catch {
     return; // the client may still be starting; the manual refresh remains
   }
@@ -1029,8 +1033,31 @@ async function runAutoPull(platform, name, attempt = 0) {
       // The rank and level above are still useful without the card art.
     }
   }
-  const line = profileLine(result.summary);
-  toast('success', 'Riot details updated', line ? `${name} · ${line}` : name);
+  if (!silent) {
+    const line = profileLine(result.summary);
+    toast('success', 'Riot details updated', line ? `${name} · ${line}` : name);
+  }
+}
+
+/* -- automatic Riot details at launch -------------------------------------- */
+/// Riot names its live session `Name#TAG`, while a saved account can be called
+/// anything, so the bridge resolves which saved account is signed in. Only that
+/// one is refreshed: reading another account would rotate its saved token.
+function scheduleStartupCheck() {
+  if (state.prefs.autoProfile === false) return;
+  setTimeout(async () => {
+    if (state.prefs.autoProfile === false) return;
+    const platform = (state.platforms.find((entry) => /riot/i.test(entry.name)) || {}).name;
+    if (!platform) return;
+    let live;
+    try {
+      live = await call('riot_live_account', { platform });
+    } catch {
+      return;
+    }
+    if (!live || !live.account) return;
+    runAutoPull(platform, live.account, 0, { silent: true, force: false });
+  }, 5000);
 }
 
 function profileLine(summary) {
@@ -1332,7 +1359,7 @@ function renderSettings() {
         <div class="section-card">
           ${toggleRow('Clear old login first', 'Remove stale session files before copying the new one', state.prefs.clearOldLogin !== false, 'pref-clear')}
           ${toggleRow('Start the launcher after switching', 'Launch the game client automatically', state.prefs.startLauncher !== false, 'pref-start')}
-          ${toggleRow('Fetch Riot details after sign-in', 'Pull rank, level and the player card about 5 seconds after an account signs in', state.prefs.autoProfile !== false, 'pref-auto')}
+          ${toggleRow('Fetch Riot details automatically', 'Pull rank, level and the player card after a sign-in, and once about 5 seconds after launch', state.prefs.autoProfile !== false, 'pref-auto')}
           ${toggleRow('Launch at Windows sign-in', 'Start Nexulon Switcher with Windows', state.autostart, 'pref-autostart')}
         </div>
       </div>
@@ -2051,6 +2078,7 @@ async function boot() {
       setStatus('No platforms');
     }
     updateStatusMeta();
+    scheduleStartupCheck();
   } catch (error) {
     setStatus('Could not start', 'error');
     $('#roster').innerHTML = `

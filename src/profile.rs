@@ -460,7 +460,7 @@ pub enum Outcome {
     Mismatch { live: String, saved: String },
 }
 
-fn same_account(platform: &Platform, account: &str, puuid: &str, live_name: &str) -> bool {
+pub(crate) fn same_account(platform: &Platform, account: &str, puuid: &str, live_name: &str) -> bool {
     let saved_id = crate::engine::account_id(platform, account);
     if !saved_id.is_empty() && saved_id.eq_ignore_ascii_case(puuid) {
         return true;

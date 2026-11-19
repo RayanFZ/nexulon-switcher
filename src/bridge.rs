@@ -377,6 +377,25 @@ fn valorant_status() -> Result<Value, String> {
     Ok(crate::riot::status_json())
 }
 
+/// Which saved account the Riot Client is signed in as right now.
+///
+/// The launch check needs this because the live session names itself
+/// (`Name#TAG`) while the saved folder can be called anything. An empty
+/// `account` means nobody is signed in or no saved account matches.
+fn riot_live_account(params: &Value) -> Result<Value, String> {
+    let platform = platform(params)?;
+    let Ok((live_name, puuid)) = crate::riot::signed_in() else {
+        return Ok(json!({ "account": Value::Null, "liveName": Value::Null }));
+    };
+    let account = crate::engine::list_accounts(platform)
+        .into_iter()
+        .find(|name| crate::profile::same_account(platform, name, &puuid, &live_name));
+    Ok(json!({
+        "account": account,
+        "liveName": live_name,
+    }))
+}
+
 fn valorant_card(params: &Value) -> Result<Value, String> {
     let platform = platform(params)?;
     let name = account_name(params)?;
@@ -586,6 +605,7 @@ pub fn dispatch(method: &str, params: &Value) -> Result<Value, String> {
         "artwork_set" => artwork_set(params),
         "artwork_clear" => artwork_clear(params),
         "valorant_status" => valorant_status(),
+        "riot_live_account" => riot_live_account(params),
         "valorant_card" => valorant_card(params),
         "riot_profile" => riot_profile(params),
         "profile" => profile_get(params),
