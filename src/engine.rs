@@ -1,7 +1,6 @@
 //! The switching engine.
 //!
-//! Reconstructed from the shipped .NET build (`TcNo-Acc-Switcher-Server.dll`,
-//! 2025.11.20.3). The contract is:
+//! The contract is:
 //!
 //! * an account is a folder in `LoginCache/<Platform>/<Name>/`
 //! * each folder mirrors the paths listed in `Platforms.json` -> `LoginFiles`

@@ -1,13 +1,13 @@
 # Nexulon Switcher
 
-A compact native Windows account switcher for game launchers, browsers and
-desktop apps. It keeps the habit that matters — **double-click an account to
-sign in** — and replaces the TcNo Account Switcher front end with a smaller,
-faster app with its own look.
+A native Windows account switcher for game launchers, browsers and desktop
+apps, written in Rust. It keeps the habit that matters — **double-click an
+account to sign in** — in one small, fast app with its own look.
 
-- One ~2.9 MB executable. The window is a native Win32 window hosting a
-  Microsoft Edge **WebView2** surface; the page, styles and scripts are compiled
-  into the exe, so there is no local web server and no loose web files.
+- One ~2.9 MB executable, built in Rust. The window is a native Win32 window
+  hosting a Microsoft Edge **WebView2** surface; the page, styles and scripts
+  are compiled into the exe, so there is no local web server and no loose web
+  files.
 - **Double-click an account** to sign in. There is no separate Login button.
 - Platform launchers live in the top bar. By default they collapse into one
   **folder chip per category** — **Launchers**, **Games**, **Browsers**, **AI**,
@@ -232,7 +232,7 @@ remembered across launches. The native Windows title bar is repainted through
 DWM to the active theme's background, text and border colours, so there is no
 second dark strip above the app and no repeated wordmark.
 
-### Upgrade features over the TcNo front end
+### Feature highlights
 
 | Feature | What it does |
 | --- | --- |
@@ -281,11 +281,10 @@ Everything the app owns lives in one folder:
 | `%APPDATA%\Nexulon Switcher\.initialized` | first-run marker |
 | `%LOCALAPPDATA%\Nexulon Switcher\WebView2` | WebView2 browser profile |
 
-On first launch the app creates that folder and, if
-`%APPDATA%\TcNo Account Switcher` exists, copies `Platforms.json`,
-`WindowSettings.json`, `LoginCache` and `Settings` into it once. The marker file
-guards the import: after that the TcNo folder is never read again, so the old
-app can be uninstalled safely.
+On first launch the app creates that folder and, if an earlier switcher's data
+folder exists, imports its `Platforms.json`, `WindowSettings.json`, `LoginCache`
+and `Settings` once. The marker file guards the import: after that the other
+folder is never read again, so the old app can be uninstalled safely.
 
 A trashed session keeps a small `.nexulon-trash.json` marker holding its name and
 account id, because launchers differ in which file stores the id. That is what
@@ -341,7 +340,7 @@ Installer artwork can be regenerated with `python tools\make_installer_art.py`.
 | `src/bridge.rs` | JSON dispatch (`bootstrap`, `accounts`, `switch`, `artwork_set`, `valorant_card`, `riot_profile`, `restore`, ...) |
 | `src/engine.rs` | switching engine (copy out/in, clear, ids, registry, launch, profile mode, artwork, trash/restore) |
 | `src/platforms.rs` | `Platforms.json` model, switch mode, category grouping, profile discovery and launch arguments |
-| `src/config.rs` | data-folder resolution, WebView2 profile path, one-time TcNo import, platform-pack merge |
+| `src/config.rs` | data-folder resolution, WebView2 profile path, one-time data import, platform-pack merge |
 | `src/http.rs` | small WinHTTP client used for Riot and card art requests (no TLS crate) |
 | `src/riot.rs` | opt-in Valorant card fetch: token exchange, write-back, region, loadout, art |
 | `src/profile.rs` | cached Riot rank/peak/level/title/sprays, catalog and rank-icon cache |

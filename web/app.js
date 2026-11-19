@@ -1472,7 +1472,7 @@ function renderSettings() {
           <button class="btn small" data-action="open-data">${svgIcon('folder')} Open data folder</button>
         </div>
       </div>
-      <div class="hint">The old TcNo Account Switcher folder was imported once on first launch. It is no longer read or written.</div>
+      <div class="hint">Data from an earlier switcher was imported once on first launch. That folder is no longer read or written.</div>
     `;
   }
 

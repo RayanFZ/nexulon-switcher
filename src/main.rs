@@ -218,7 +218,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(code);
     }
 
-    // Create the Nexulon-owned data folder and import the old TcNo data once.
+    // Create the Nexulon-owned data folder and import any previous switcher's
+    // data once.
     config::ensure_data_root();
 
     let event_loop = EventLoopBuilder::<UserEvent>::with_user_event().build();

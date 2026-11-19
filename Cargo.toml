@@ -2,7 +2,7 @@
 name = "nexulon-switcher"
 version = "1.0.0"
 edition = "2024"
-description = "Fast native Windows account switcher for game launchers, browsers and desktop apps"
+description = "Fast, native Rust account switcher for game launchers, browsers and desktop apps"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/RayanFZ/nexulon-switcher"

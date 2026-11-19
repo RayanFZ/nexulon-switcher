@@ -39,13 +39,15 @@ pub fn start_menu_programdata() -> PathBuf {
     programdata().join(r"Microsoft\Windows\Start Menu\Programs")
 }
 
-/// Everything this app owns lives in one folder, separate from TcNo.
-/// `NEXULON_DATA_DIR` overrides it (used by the sandbox self-test).
+/// Everything this app owns lives in one folder, separate from any other
+/// switcher's data. `NEXULON_DATA_DIR` overrides it (used by the sandbox
+/// self-test).
 pub fn data_root() -> PathBuf {
     env_path("NEXULON_DATA_DIR", || appdata().join("Nexulon Switcher"))
 }
 
-/// The old TcNo folder is only read once, during first-run import.
+/// A previous switcher's data folder, read once during the first-run import.
+/// The folder name is a fixed compatibility path, not a product reference.
 pub fn legacy_root() -> PathBuf {
     appdata().join("TcNo Account Switcher")
 }
@@ -81,9 +83,9 @@ pub fn log_path() -> PathBuf {
     data_root().join("logs").join("nexulon-switcher.log")
 }
 
-/// Create the Nexulon data folder on first launch and, if the old TcNo folder
-/// exists, import its login cache/settings once. After this the app never reads
-/// the TcNo folder again.
+/// Create the Nexulon data folder on first launch and, if a previous
+/// switcher's folder exists, import its login cache/settings once. After this
+/// the app never reads that folder again.
 pub fn ensure_data_root() {
     if std::env::var_os("NEXULON_DATA_DIR").is_some() {
         return;
