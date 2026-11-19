@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an improvement or a new launcher, game or app.
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation where the app falls short today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like it to do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you have tried (optional)
+    validations:
+      required: false
+  - type: input
+    id: platform
+    attributes:
+      label: Launcher or app (optional)
+      description: For a new service, say where it stores its login files and which process should close on a switch.
+      placeholder: e.g. Ubisoft Connect
+    validations:
+      required: false

@@ -410,6 +410,12 @@ Never point `--dump switch` at real data unless you intend to switch.
   account when a different account is signed in; the UI asks before forcing it.
   Rank data is a snapshot per account, updated only when that account is live.
 
+## Contributing
+
+Bugs and ideas go to [Issues](https://github.com/RayanFZ/nexulon-switcher/issues).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for what to include — and never attach
+saved logins, session files or tokens.
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Use it, fork it, and ship your own build.
