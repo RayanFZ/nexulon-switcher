@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 use std::path::{Path, PathBuf};
 
 use serde_json::{Map, Value, json};

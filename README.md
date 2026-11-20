@@ -417,4 +417,15 @@ saved logins, session files or tokens.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Use it, fork it, and ship your own build.
+Copyright (C) 2026 Nexulon Corp. All rights reserved.
+
+Nexulon Switcher is **free to download and use**, for personal or commercial
+purposes. The unmodified app may be run by anyone at no cost.
+
+It is **not open source**. You may not modify it, create derivative works, or
+publish, redistribute, sublicense or sell the app or any modified build, in
+source or binary form. The source is published for transparency and reference
+only. See [LICENSE](LICENSE) for the full terms.
+
+The bundled WebView2 bootstrapper remains under Microsoft's terms, and each
+platform logo is a trademark of its owner.

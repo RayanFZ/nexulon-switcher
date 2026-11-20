@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 //! A native "pick a picture" dialog.
 //!
 //! The app deliberately carries no UI toolkit beyond the WebView, so the common

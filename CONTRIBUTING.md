@@ -25,3 +25,6 @@ stores its login files and which process should be closed on a switch.
 Build instructions and the source layout are in the
 [README](README.md#build). Keep the app native and compact: no local web server,
 no extra runtime, no telemetry. Run `cargo test` before sending a pull request.
+
+By submitting a pull request you agree that your contribution becomes the
+property of Nexulon Corp and may be included in the app under its license.

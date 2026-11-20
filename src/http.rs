@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 //! Minimal HTTPS client built on WinHTTP.
 //!
 //! The app only needs a handful of JSON and image requests, so pulling in a

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 //! Cached Riot profile data: competitive rank, peak, account level and the
 //! equipped title, banner and sprays.
 //!

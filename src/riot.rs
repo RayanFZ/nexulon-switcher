@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 //! Riot sign-in helpers for the opt-in Valorant player-card fetch.
 //!
 //! The equipped player card is not stored on disk; the game asks Riot's

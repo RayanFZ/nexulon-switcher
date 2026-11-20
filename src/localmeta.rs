@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 //! Friendly names and pictures read from the apps themselves.
 //!
 //! These are local-only: no network, no tokens. They are used as a fallback

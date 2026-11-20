@@ -79,6 +79,16 @@
             <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
           </Component>
 
+          <Component Id="LicenseFile" Guid="B18A4699-AE37-486C-8ED9-58EEC8B07E77" Win64="yes">
+            <File Id="LicenseTxt" Source="..\LICENSE" Name="LICENSE.txt" />
+            <RegistryValue Root="HKLM"
+                           Key="Software\NexulonSwitcher"
+                           Name="LicenseFile"
+                           Type="integer"
+                           Value="1"
+                           KeyPath="yes" />
+          </Component>
+
           <Component Id="StartMenuShortcut" Guid="5BF6C189-1F0C-451B-A6C5-9311B8AF693D" Win64="yes">
             <Shortcut Id="StartMenuLink"
                       Directory="ProgramMenuDir"
@@ -138,6 +148,7 @@
 
     <Feature Id="MainFeature" Title="Nexulon Switcher" Level="1">
       <ComponentRef Id="AppExe" />
+      <ComponentRef Id="LicenseFile" />
       <ComponentRef Id="StartMenuShortcut" />
       <ComponentRef Id="DesktopShortcut" />
       <ComponentRef Id="WebView2Bootstrapper" />

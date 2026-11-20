@@ -1,3 +1,5 @@
+/* Copyright (C) 2026 Nexulon Corp. All rights reserved. See LICENSE for the terms. */
+
 /* ==========================================================================
    Nexulon Switcher — interface skin
    Organised in layers: tokens, shell, rails, roster, overlays, motion.
@@ -1710,6 +1712,12 @@ kbd {
   margin-top: 6px;
 }
 .about-version { margin-top: 2px; font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
+.about-hero .about-license {
+  margin-top: 10px;
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+}
 
 /* -- modal ---------------------------------------------------------------- */
 .modal { position: fixed; inset: 0; z-index: 65; display: grid; place-items: center; padding: 24px; }

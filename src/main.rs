@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 //! Nexulon Switcher — a compact account switcher for Windows game launchers.
 //!
 //! The window is a native tao window hosting a WebView2 surface. The page is

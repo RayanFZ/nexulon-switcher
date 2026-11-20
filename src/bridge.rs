@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 //! Bridge between the WebView and the switching engine.
 //!
 //! The page talks to Rust with `window.ipc.postMessage(JSON)` and receives a

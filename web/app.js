@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 'use strict';
 
 /* ==========================================================================
@@ -1464,6 +1467,7 @@ function renderSettings() {
         <h3>NEXULON CORP</h3>
         <p>Session orchestration for persistent gaming.</p>
         <span class="about-version">Build 1.0.0</span>
+        <div class="about-license">&copy; 2026 Nexulon Corp. All rights reserved.</div>
       </div>
       <div>
         <h3 class="section-title">Storage</h3>

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 //! Platform artwork compiled straight into the executable.
 //!
 //! Keeping the icons inside the binary means the portable build is a single
