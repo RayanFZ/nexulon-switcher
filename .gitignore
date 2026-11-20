@@ -3,6 +3,7 @@
 /installer/payload
 /installer/*.wixobj
 /installer/*.wixpdb
+/installer/NexulonSwitcher.build.*
 *.pdb
 
 # Local deliverables

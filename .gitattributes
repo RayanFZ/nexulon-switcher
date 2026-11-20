@@ -1,0 +1,8 @@
+# Keep binary artifacts out of text diffs and merge attempts.
+*.png binary
+*.ico binary
+*.bmp binary
+*.rgba binary
+*.exe binary
+*.msi binary
+*.wixpdb binary

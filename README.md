@@ -1,5 +1,7 @@
 # Nexulon Switcher
 
+[![build](https://github.com/RayanFZ/nexulon-switcher/actions/workflows/build.yml/badge.svg)](https://github.com/RayanFZ/nexulon-switcher/actions/workflows/build.yml)
+
 A native Windows account switcher for game launchers, browsers and desktop
 apps, written in Rust. It keeps the habit that matters — **double-click an
 account to sign in** — in one small, fast app with its own look.
@@ -69,6 +71,9 @@ Double-click `Nexulon Switcher Setup.msi` and approve the UAC prompt.
 
 - Installs for all users to `C:\Program Files\Nexulon Switcher`.
 - Adds a common Start Menu shortcut and a public desktop shortcut.
+- Installs `LICENSE.txt` next to the exe.
+- Installing a newer download over an existing install upgrades it in place;
+  saved accounts and settings in `%APPDATA%` are left untouched.
 - Registers in Apps & features for a clean uninstall.
 - Runs `redist\MicrosoftEdgeWebView2Setup.exe /silent /install` only when no
   machine-wide WebView2 runtime is found; the runtime stays installed after the
@@ -361,17 +366,18 @@ Installer artwork can be regenerated with `python tools\make_installer_art.py`.
 ## Debug helpers
 
 ```powershell
-# Inventory of platforms/accounts as JSON (the release build has no console,
-# but --dump still writes to the attached terminal)
-target\release\nexulon-switcher.exe --dump
-target\release\nexulon-switcher.exe --dump accounts "Riot Games"
-target\release\nexulon-switcher.exe --dump switch '{"platform":"Riot Games","account":"Name"}'
-target\release\nexulon-switcher.exe --dump valorant_status
-target\release\nexulon-switcher.exe --dump riot_profile '{"platform":"Riot Games","account":"Name"}'
-target\release\nexulon-switcher.exe --dump artwork_set '{"platform":"Steam","account":"Name","kind":"cover","path":"D:/art.png"}'
+# --dump is compiled out of release builds, so build and use the debug binary.
+cargo build
+target\debug\nexulon-switcher.exe --dump
+target\debug\nexulon-switcher.exe --dump accounts "Riot Games"
+target\debug\nexulon-switcher.exe --dump switch '{"platform":"Riot Games","account":"Name"}'
+target\debug\nexulon-switcher.exe --dump valorant_status
+target\debug\nexulon-switcher.exe --dump riot_profile '{"platform":"Riot Games","account":"Name"}'
+target\debug\nexulon-switcher.exe --dump artwork_set '{"platform":"Steam","account":"Name","kind":"cover","path":"D:/art.png"}'
 
 # Full add/switch/rename/notes/artwork/delete/restore round trip in a sandbox
-$env:NEXULON_EXE = "target\release\nexulon-switcher.exe"
+# (it drives the app through --dump, so point it at the debug build)
+$env:NEXULON_EXE = "target\debug\nexulon-switcher.exe"
 python tools\sandbox_test.py
 
 # Screenshot one window; --pid avoids matching another app by title
@@ -379,7 +385,8 @@ python tools\shot.py --pid 1234 D:\shot.png
 ```
 
 `NEXULON_EVAL` runs one JavaScript snippet ~2.6 s after startup; it exists so the
-interface can be driven by automated screenshot checks.
+interface can be driven by automated screenshot checks. Like `--dump`, it is
+compiled out of release builds.
 
 Never point `--dump switch` at real data unless you intend to switch.
 `--dump valorant_card` will also be refused while a Riot process is running.
@@ -414,6 +421,13 @@ Never point `--dump switch` at real data unless you intend to switch.
 Bugs and ideas go to [Issues](https://github.com/RayanFZ/nexulon-switcher/issues).
 See [CONTRIBUTING.md](CONTRIBUTING.md) for what to include — and never attach
 saved logins, session files or tokens.
+
+## Security
+
+Report vulnerabilities privately through
+[Security advisories](https://github.com/RayanFZ/nexulon-switcher/security/advisories/new),
+not in a public issue. See [SECURITY.md](SECURITY.md) for scope and what to
+include.
 
 ## License
 

@@ -6,7 +6,7 @@
 # wix314-binaries.zip (https://github.com/wixtoolset/wix3/releases).
 
 param(
-    [string]$WixDir = "D:\Tmp\nexulon-build\wix",
+    [string]$WixDir = $env:WIX314,
     [string]$Output = ""
 )
 
@@ -15,7 +15,11 @@ $ErrorActionPreference = "Stop"
 $installer = $PSScriptRoot
 $root = Split-Path -Parent $installer
 if (-not $Output) {
-    $Output = Join-Path (Split-Path -Parent $root) "Nexulon Switcher Setup.msi"
+    $Output = Join-Path $root "Nexulon Switcher Setup.msi"
+}
+
+if (-not $WixDir) {
+    throw "Set -WixDir to the folder holding candle.exe and light.exe, or set the WIX314 environment variable."
 }
 
 $candle = Join-Path $WixDir "candle.exe"
@@ -42,12 +46,26 @@ Copy-Item $exe (Join-Path $payload "Nexulon Switcher.exe") -Force
 
 Push-Location $installer
 try {
-    & $candle -nologo -arch x64 -ext WixUIExtension "NexulonSwitcher.wxs"
+    # Releases keep the same version while their files are replaced, so every
+    # build gets a fresh product code and the MSI performs a same-version major
+    # upgrade. Without that, installing over the previous build would open a
+    # repair that keeps the old exe because its file version did not change.
+    $productCode = [guid]::NewGuid().ToString().ToUpper()
+    $wxs = Get-Content "NexulonSwitcher.wxs" -Raw
+    $wxs = [regex]::Replace($wxs, '<Product Id="[0-9A-Fa-f-]{36}"', "<Product Id=`"$productCode`"")
+    [IO.File]::WriteAllText(
+        (Join-Path $installer "NexulonSwitcher.build.wxs"),
+        $wxs,
+        (New-Object Text.UTF8Encoding($false))
+    )
+
+    & $candle -nologo -arch x64 -ext WixUIExtension "NexulonSwitcher.build.wxs"
     if ($LASTEXITCODE -ne 0) { throw "candle failed ($LASTEXITCODE)" }
 
-    & $light -nologo -ext WixUIExtension -cultures:en-us -sice:ICE43 -sice:ICE57 -out $Output "NexulonSwitcher.wixobj"
+    & $light -nologo -ext WixUIExtension -cultures:en-us -sice:ICE43 -sice:ICE57 -sice:ICE61 -out $Output "NexulonSwitcher.build.wixobj"
     if ($LASTEXITCODE -ne 0) { throw "light failed ($LASTEXITCODE)" }
 } finally {
+    Remove-Item "NexulonSwitcher.build.wxs", "NexulonSwitcher.build.wixobj", "NexulonSwitcher.build.wixpdb" -Force -ErrorAction SilentlyContinue
     Pop-Location
 }
 

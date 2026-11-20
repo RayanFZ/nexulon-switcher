@@ -5,7 +5,7 @@
            Name="Nexulon Switcher"
            Language="1033"
            Version="1.0.0"
-           Manufacturer="Nexulon Switcher"
+           Manufacturer="Nexulon Corp"
            UpgradeCode="ED29BF99-E556-41FD-8B9D-0B511ACA1B38">
 
     <Package InstallerVersion="500"
@@ -15,12 +15,13 @@
              Description="Nexulon Switcher — fast account switching for game launchers"
              Comments="Installs Nexulon Switcher and the WebView2 runtime it needs for all users of this PC." />
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of Nexulon Switcher is already installed." />
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="A newer version of Nexulon Switcher is already installed." />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
     <Icon Id="AppIcon" SourceFile="..\assets\nexulon.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
-    <Property Id="ARPCONTACT" Value="Nexulon Switcher" />
+    <Property Id="ARPCONTACT" Value="Nexulon Corp" />
     <Property Id="ARPNOREPAIR" Value="1" />
 
     <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />

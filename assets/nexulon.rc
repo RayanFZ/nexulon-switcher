@@ -15,11 +15,11 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName",      "Nexulon Switcher"
+            VALUE "CompanyName",      "Nexulon Corp"
             VALUE "FileDescription",  "Nexulon Switcher"
             VALUE "FileVersion",      "1.0.0.0"
             VALUE "InternalName",     "nexulon-switcher"
-            VALUE "LegalCopyright",   "Copyright (c) 2026 Nexulon Switcher"
+            VALUE "LegalCopyright",   "Copyright (C) 2026 Nexulon Corp. All rights reserved."
             VALUE "OriginalFilename", "Nexulon Switcher.exe"
             VALUE "ProductName",      "Nexulon Switcher"
             VALUE "ProductVersion",   "1.0.0.0"
