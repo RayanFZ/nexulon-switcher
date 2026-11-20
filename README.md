@@ -355,9 +355,11 @@ Installer artwork can be regenerated with `python tools\make_installer_art.py`.
 | `web/index.html` | app shell and overlays |
 | `web/style.css` | theme tokens, layout, card covers, drawers, responsive rules |
 | `web/app.js` | UI state, IPC, palette, settings, artwork, Valorant dialog, toasts |
+| `.github/` | issue forms, contribution guide and the Windows build workflow |
 | `assets/platforms/` | bundled platform SVGs |
 | `data/Platforms.default.json` | bundled platform pack (45 services, grouped by category) |
 | `installer/` | WiX source, license, artwork, WebView2 redist, build script |
+| `tools/make_icon.py` | builds `assets/icon-source.svg` into the PNG, ICO and raw RGBA used by the app |
 | `tools/sandbox_test.py` | end-to-end engine test against a throwaway data dir |
 | `tools/make_installer_art.py` | generates `installer\banner.bmp` / `dialog.bmp` |
 | `tools/shot.py` | PrintWindow screenshot helper; `--pid` targets one process |
