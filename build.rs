@@ -1,3 +1,6 @@
+// Copyright (C) 2026 Nexulon Corp. All rights reserved.
+// See LICENSE for the terms.
+
 fn main() {
     println!("cargo:rerun-if-changed=assets/nexulon.rc");
     println!("cargo:rerun-if-changed=assets/nexulon.ico");
